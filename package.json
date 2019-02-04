@@ -1,0 +1,19 @@
+{
+  "name": "reflex",
+  "version": "1.0.0",
+  "description": "A multiplayer tron game using socket.io",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dcenatiempo/reflex.git"
+  },
+  "author": "Devin Cenatiempo",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dcenatiempo/reflex/issues"
+  },
+  "homepage": "https://github.com/dcenatiempo/reflex#readme"
+}
