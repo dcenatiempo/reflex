@@ -4,7 +4,9 @@
   "description": "A multiplayer tron game using socket.io",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "client": "cd client; npm run serve;",
+    "server": "cd server; npm start;"
   },
   "repository": {
     "type": "git",

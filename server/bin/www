@@ -11,8 +11,9 @@ require('dotenv').config();
 
 const app = require('../app');
 const debug = require('debug')('server:server');
-const http = require('http');
+const server = require('http').createServer(app);
 const db = require('./db');
+const io = require('../io');
 
 /**
  * Get port from environment and store in Express.
@@ -20,12 +21,6 @@ const db = require('./db');
 
 var port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
-
-/**
- * Create HTTP server.
- */
-
-var server = http.createServer(app);
 
 /**
  * Connect to DB
@@ -36,13 +31,20 @@ db.connect(process.env.MONGO_URL, function(err) {
     console.log('Unable to connect to Mongo: ', err)
     process.exit(1)
   } else {
-    app.listen(port, function() {
+    let http = app.listen(port, function() {
       console.log(`Listening on port ${port}...`)
-    })
+    });
+
     server.on('error', onError);
     server.on('listening', onListening);
+
+    /**
+     * Create HTTP server.
+     */
+    io.listen(http, { path: '/socket' });
+
   }
-})
+});
 
 /**
  * Normalize a port into a number, string, or false.
