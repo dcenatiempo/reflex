@@ -3,15 +3,8 @@
     <HelloWorld msg="Hello World"/>
     The home page will have:
     <ul>
-      <li>General Chat</li>
-      <li>Room List</li>
-      <li>Room Creation</li>
-      <li>Join a room</li>
-    </ul>
-    Each room will have:
-    <ul>
-      <li>Its own chat</li>
-      <li>Game Board</li>
+      <li>Description</li>
+      <li>Form to enter user name</li>
     </ul>
   </div>
 </template>

@@ -1,12 +1,29 @@
 <template>
   <div id="app">
-    <div id="nav">
+    <!-- <div id="nav">
       <router-link to="/">Home</router-link> |
-      <router-link to="/about">About</router-link>
-    </div>
+      <router-link to="/arena">About</router-link>
+    </div> -->
     <router-view/>
   </div>
 </template>
+
+<script>
+// import io from 'socket.io-client';
+import {mapState} from 'vuex';
+
+export default {
+  name: 'app',
+  computed: {
+    ...mapState(['socket']),
+  },
+  mounted() {
+    this.socket.on('news', (payload) => {
+      console.log(payload);
+    });
+  }
+}
+</script>
 
 <style lang="scss">
 #app {
