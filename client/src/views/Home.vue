@@ -1,22 +1,88 @@
 <template>
-  <div class="home">
-    <HelloWorld msg="Hello World"/>
-    The home page will have:
-    <ul>
-      <li>Description</li>
-      <li>Form to enter user name</li>
-    </ul>
+  <div id="home">
+    <h1>Reflex</h1>
+    <div class="name-form">
+      <span>What is your name:</span>
+      <div class="relative name-input">
+        <input
+          type="text"
+          placeholder="Enter Your Name"
+          v-model="name"/>
+        <span v-show="alreadyExists" class="warning">Name is already taken, choose another</span>
+      </div>
+      <button class="arena-btn" :disabled="alreadyExists || name.length < 3" @click="submitPlayerName">Enter Arena</button>
+    </div>
   </div>
 </template>
 
 <script>
 // @ is an alias to /src
-import HelloWorld from '@/components/HelloWorld.vue'
+// import NewPlayerInpu from '@/components/HelloWorld.vue'
+import { mapState } from 'vuex';
 
 export default {
   name: 'home',
-  components: {
-    HelloWorld
-  }
+  components: {},
+  data() {
+    return {
+      name: '',
+    }
+  },
+  computed: {
+    ...mapState(['players']),
+    alreadyExists() {
+      return this.players.find(player => this.name.toLowerCase() === player.name.toLowerCase()) ? true : false;
+    }
+  },
+  methods: {
+    submitPlayerName() {
+      // TODO
+      // use socket to emit the name and add it to the player collection
+      // navigate to the arena
+    },
+  },
 }
 </script>
+
+<style lang="scss">
+#home {
+  h1 {
+    font-size: 3em;
+  }
+  .warning {
+    color: red;
+    position: absolute;
+    right: 10px;
+    bottom: 0;
+  }
+  .arena-btn {
+    font-size: 2em;
+    background: orange;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: .5em;
+    width: 100%;
+
+    &[disabled] {
+      background: lightgray;
+    }
+  }
+  .name-input {
+    width: 100%;
+
+    input {
+      font-size: 1.5em;
+      width: 100%;
+      margin-bottom: 1em;
+    }
+  }
+  .name-form {
+    display: grid;
+    max-width: 400px;
+    margin: auto;
+    grid-gap: 10px;
+    justify-items: start;
+  }
+}
+</style>

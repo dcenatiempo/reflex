@@ -17,7 +17,7 @@ export default new Vuex.Store({
     rooms: [],
 
     //list of all players connected to app
-    players: [],
+    players: [{name: 'Devin', wins: 0, gamesPlayed: 2}],
 
     // current "logged in" player
     player: {
