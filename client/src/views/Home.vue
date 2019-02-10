@@ -26,20 +26,30 @@ export default {
   data() {
     return {
       name: '',
+      enterArena: false,
     }
   },
   computed: {
-    ...mapState(['players']),
+    ...mapState(['socket', 'players', 'playerId']),
     alreadyExists() {
       return this.players.find(player => this.name.toLowerCase() === player.name.toLowerCase()) ? true : false;
     }
   },
   methods: {
     submitPlayerName() {
-      // TODO
-      // use socket to emit the name and add it to the player collection
-      // navigate to the arena
+      this.socket.emit('new-player', this.name);
     },
+  },
+  mounted() {
+    if (this.playerId)
+      this.$router.push('arena');
+  
+  },
+  watch: {
+    playerId(id) {
+      if (!id) return;
+      this.$router.push('arena');
+    }
   },
 }
 </script>

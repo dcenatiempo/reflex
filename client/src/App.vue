@@ -9,18 +9,53 @@
 </template>
 
 <script>
-// import io from 'socket.io-client';
-import {mapState} from 'vuex';
+import { mapState, mapMutations } from 'vuex';
 
 export default {
   name: 'app',
   computed: {
-    ...mapState(['socket']),
+    ...mapState(['socket', 'playerId']),
+  },
+  methods: {
+      ...mapMutations(['authenticatePlayer', 'updatePlayerList']),
   },
   mounted() {
-    this.socket.on('news', (payload) => {
-      console.log(payload);
+    this.socket.open();
+
+    this.socket.on('disconnect', (reason) => {
+      console.log(reason);
+      if (reason === 'io server disconnect') {
+        // the disconnection was initiated by the server, you need to reconnect manually
+        this.socket.connect();
+      }
+      // else the socket will automatically try to reconnect
     });
+
+    this.socket.on('reconnect_attempt', () => {
+      this.socket.io.opts.query = {
+        playerId: window.sessionStorage.getItem('playerId'),
+      }
+    });
+
+    this.socket.on('delete-user', () => {
+      debugger
+      this.authenticatePlayer(null);
+      window.sessionStorage.removeItem('playerId');
+    });
+
+    this.socket.on('players-update', (playerList) => {
+      console.log(playerList);
+      this.updatePlayerList(playerList);
+    });
+
+    this.socket.on('player-id', (id) => {
+      if (!id) return;
+      this.authenticatePlayer(id);
+      window.sessionStorage.setItem('playerId', id);
+    });
+
+    if (this.playerId)
+      this.$router.push({ path: '/arena' });
   }
 }
 </script>

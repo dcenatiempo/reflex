@@ -4,7 +4,7 @@ const MongoClient = require('mongodb').MongoClient;
 const state = {
   db: null,
   rooms: null,
-  users: null,
+  players: null,
 }
 const options = { useNewUrlParser: true };
 
@@ -14,7 +14,11 @@ exports.connect = function(url, done) {
     if (err) return done(err)
     state.db = db.db('reflex');
     state.rooms = state.db.collection('rooms');
-    state.users = state.db.collection('users');
+    state.players = state.db.collection('players');
+    state.players.deleteMany();
+    // state.players.dropIndexes();
+    state.players.createIndex( { 'name': 1 }, { unique: true } );
+    state.players.createIndex( { 'updatedAt': 1 }, { expireAfterSeconds: 30 } )
     done()
   })
 }
