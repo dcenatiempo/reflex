@@ -58,7 +58,6 @@ export default {
     });
 
     this.socket.on('update-arena-chat', message => {
-      debugger
       this.addArenaChat(message);
     });
   

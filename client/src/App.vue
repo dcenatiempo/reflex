@@ -38,7 +38,6 @@ export default {
     });
 
     this.socket.on('delete-user', () => {
-      debugger
       this.authenticatePlayer(null);
       window.sessionStorage.removeItem('playerId');
     });

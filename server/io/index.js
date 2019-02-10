@@ -5,7 +5,7 @@ const ObjectID = require('mongodb').ObjectID;
 
 io.on('connection', function (socket) {
   let playerId = socket.handshake.query.playerId
-  playerId = 'null' == playerId ? null : playerId;
+  playerId = 'null' == playerId ? null : ObjectID(playerId);
 
   if (playerId) {
     // update timestamp
@@ -30,6 +30,7 @@ io.on('connection', function (socket) {
   
   socket.conn.on('heartbeat', function() {
     console.log('heartbeat');
+    if (!playerId) return;
     // update timestamp
     db.players.updateOne({ _id: playerId }, { $set: { updatedAt: new Date()} })
     .then (res => {
@@ -55,7 +56,6 @@ io.on('connection', function (socket) {
 
     // add player to database
     db.players.insertOne(player).then( (res) => {
-      console.log(res.insertedId);
       playerId = res.insertedId;
       
       // send player their player id
@@ -96,8 +96,8 @@ io.on('connection', function (socket) {
 
   socket.on('send-arena-chat', message => {
     console.log('sending message!!!')
-    let sockets = Object.keys(io.sockets.clients().sockets);
-    console.log(sockets);
+    // let sockets = Object.keys(io.sockets.clients().sockets);
+    // console.log(sockets);
     io.sockets.emit('update-arena-chat', {message: message, playerId});
   });
 
@@ -123,3 +123,4 @@ io.on('connection', function (socket) {
 });
 
 module.exports = io;
+
