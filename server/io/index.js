@@ -70,16 +70,51 @@ io.on('connection', function (socket) {
   });
 
   socket.on('enter-room', (room) => {
-    console.log('New Room: ' + room);
+    console.log('Entering Room: ' + room);
+
+    let sockets = Object.keys(io.sockets.clients().sockets);
+    let rooms = Object.keys(io.sockets.adapter.rooms);
+    let beforeRooms = rooms.filter(room => !sockets.includes(room));
+    console.log(beforeRooms)
+    
 
     socket.join([room], (err) => {
       let sockets = Object.keys(io.sockets.clients().sockets);
       let rooms = Object.keys(io.sockets.adapter.rooms);
-      
-      // an array or room names
-      rooms = rooms.filter(room => !sockets.includes(room));
+      let afterRooms = rooms.filter(room => !sockets.includes(room));
+      console.log(afterRooms)
 
-      io.sockets.emit('rooms-update', rooms);
+      let dif = roomDif(beforeRooms, afterRooms);
+      console.log(dif);
+      if (dif) {
+        console.log('New Room: ' + dif.join(', '));
+        io.sockets.emit('rooms-update', afterRooms);
+      }
+
+    });
+  });
+
+  socket.on('leave-room', (room) => {
+    console.log('Leaving Room: ' + room);
+
+    let sockets = Object.keys(io.sockets.clients().sockets);
+    let rooms = Object.keys(io.sockets.adapter.rooms);
+    let beforeRooms = rooms.filter(room => !sockets.includes(room));
+    console.log(beforeRooms)
+    
+
+    socket.leave([room], (err) => {
+      let sockets = Object.keys(io.sockets.clients().sockets);
+      let rooms = Object.keys(io.sockets.adapter.rooms);
+      let afterRooms = rooms.filter(room => !sockets.includes(room));
+      console.log(afterRooms)
+
+      let dif = roomDif(afterRooms, beforeRooms);
+      console.log(dif);
+      if (dif) {
+        console.log('Destroy Room: ' + dif.join(', '));
+        io.sockets.emit('rooms-update', afterRooms);
+      }
 
     });
   });
@@ -124,3 +159,12 @@ io.on('connection', function (socket) {
 
 module.exports = io;
 
+// helpers
+function roomDif(before, after) {
+  // TODO: consider refactor
+  let dif = [...after].filter(x => !before.includes(x));
+
+  if (dif.length === 0)
+    return null;
+  return dif;
+}
