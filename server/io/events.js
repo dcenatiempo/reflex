@@ -1,97 +1,205 @@
 const db = require('../db').get();
 const ObjectID = require('mongodb').ObjectID;
-  
-const heartbeat = function() {
-    console.log('heartbeat');
-    if (!playerId) return;
-    // update timestamp
-    db.players.updateOne({ _id: playerId }, { $set: { updatedAt: new Date()} })
-    .then (res => {
-        if (0 == res.matchedCount) {
-        socket.emit('delete-user');
-        // get all players
-        db.players.find().toArray().then(allPlayers => {
-            socket.emit('players-update', allPlayers);
-        });
-        }
-    }).catch( err => {console.log(err)});
+
+let io;
+
+const register = function (ioServer) {
+    io = ioServer;
 }
 
-const newPlayer = function(name) {
+const connection = function(socket) {
+    socket.playerId = socket.handshake.query.playerId;
+    socket.currentRoom = socket.handshake.query.currentRoom;
+    socket.playerId = 'null' == socket.playerId ? null : ObjectID(socket.playerId);
+    socket.currentRoom = 'null' == socket.currentRoom ? null : socket.currentRoom;
+
+    if (socket.playerId) {
+        // update timestamp
+        let query = { _id: socket.playerId };
+        let update = { $set: { updatedAt: new Date(), socketId: socket.id} }
+        db.players.findOneAndUpdate(query, update).then (res => {
+            if (0 == res.lastErrorObject.updatedExisting) {
+                notifyClientsPlayerDeleted(socket);
+                return;
+            }
+            
+            if (!socket.currentRoom) return;
+        
+            roomChange(socket, 'join', socket.currentRoom);
+        }).catch( err => {console.log(err)});
+    }
+
+    console.log('A user connected: '+ socket.playerId + ', ' + socket.id);
+    
+    // send all players the new player list
+    emitPlayersUpdate();
+}
+  
+const heartbeat = function(socket) {
+    console.log('heartbeat: ' + socket.playerId);
+    if (!socket.playerId) return;
+    
+    // update mongo to prevent player expiration
+    let query = { _id: socket.playerId };
+    let update = { $set: { updatedAt: new Date()} }
+    db.players.updateOne(query, update).then (res => {
+        if (1 == res.matchedCount) return;
+        notifyClientsPlayerDeleted(socket)
+    }).catch( err => { console.log(err); });
+}
+
+const newPlayer = function(socket, name) {
     console.log('New player: ' + name);
 
     let player = {
         name,
         wins: 0,
         gamesPlayed: 0,
-        updatedAt: new Date()
+        updatedAt: new Date(),
+        socketId: socket.id
     }
 
     // add player to database
-    db.players.insertOne(player).then( (res) => {
-        playerId = res.insertedId;
+    db.players.insertOne(player).then( res => {
+        socket.playerId = res.insertedId;
         
         // send player their player id
-        socket.emit('player-id', res.insertedId);
+        socket.emit('add-player', res.insertedId);
         
-        // get updated player list
-        db.players.find().toArray().then(allPlayers => {
-        // send player list to all players
-        io.sockets.emit('players-update', allPlayers);
-        }); 
-    });
+        // send all players the new player list
+        emitPlayersUpdate(); 
+    }).catch(e => { console.log(e); });
 }
 
-const enterRoom = function(room) {
-    console.log('New Room: ' + room);
+const deletePlayer = function(socket, playerId) {
+    
+    // remove player from players collection
+    db.players.deleteOne({_id: ObjectID(playerId)}, (err, res) => {
+        if(err) console.log(err);
 
-    socket.join([room], (err) => {
-        let sockets = Object.keys(io.sockets.clients().sockets);
-        let rooms = Object.keys(io.sockets.adapter.rooms);
+        socket.playerId = null;
+        console.log('player deleted');
         
-        // an array or room names
-        rooms = rooms.filter(room => !sockets.includes(room));
-
-        io.sockets.emit('rooms-update', rooms);
-
+        // send all players the new player list
+        emitPlayersUpdate(); 
     });
+
+    // remove player from rooms collection
+    if (socket.currentRoom) {
+        roomChange(socket, 'leave', room);
+    }
 }
 
-const requestRooms = function() {
-    let sockets = Object.keys(io.sockets.clients().sockets);
-    let rooms = Object.keys(io.sockets.adapter.rooms);
+const enterRoom = function(socket, room) {
+    roomChange(socket, 'join', room);
+}
 
-    // an array or room names
-    rooms = rooms.filter(room => !sockets.includes(room));
+const leaveRoom = function(socket, room) {
+    roomChange(socket, 'leave', room);
+}
 
+const requestRooms = function(socket) {
+    let rooms = getRooms();
     socket.emit('rooms-update', rooms);
 }
 
-const sendArenaChat = function(message) {
-    console.log('sending message!!!')
-    // let sockets = Object.keys(io.sockets.clients().sockets);
-    // console.log(sockets);
-    io.sockets.emit('update-arena-chat', {message: message, playerId});
+const sendArenaChat = function(socket, message) {
+    const payload = {
+        message,
+        playerId: socket.playerId
+    };
+    io.sockets.emit('update-arena-chat', payload);
 }
 
-const sendRoomChat = function(payload) {
-    io.to(payload.room).emit('update-room-chat', {message: payload.message, from: playerId});
+const sendRoomChat = function(socket, message) {
+    const payload = {
+        message,
+        playerId: socket.playerId
+    }
+    io.to(payload.room).emit('update-room-chat', payload);
 }
 
-const disconnect = function() {
-    console.log('user disconnected: ' + playerId);
-
-    // remove player from players & rooms collection
-    // db.players.deleteOne({_id: playerId}, (err, res) => {
-    //   if(err) console.log(err);
-    //   console.log('player deleted');
-    //   // get updated player list
-    //   db.players.find().toArray().then(allPlayers => {
-    //     // send playerlist to all players
-    //     io.sockets.emit('players-update', allPlayers);
-    //   }); 
-    // });
+const disconnect = function(socket, reason) {
+    // 'io server disconnect’
+    // ‘io client disconnect’
+    // ‘ping timeout'
+    // 'transport close'
+    console.log(`${socket.playerId} disconnected because ${reason}`);
 }
 
-module.exports = io;
+module.exports = {
+    connection,
+    register,
+    heartbeat,
+    newPlayer,
+    deletePlayer,
+    enterRoom,
+    leaveRoom,
+    requestRooms,
+    sendArenaChat,
+    sendRoomChat,
+    disconnect
+};
 
+function roomDif(before, after) {
+    let dif = [...after].filter(x => !before.includes(x));
+
+    if (dif.length === 0)
+        return null;
+
+    return dif;
+}
+
+function emitPlayersUpdate() {
+    db.players.find().toArray().then(allPlayers => {
+        io.sockets.emit('players-update', allPlayers);
+    }).catch(e=>console.log(e)); 
+}
+
+function getRooms() {
+    let sockets = Object.keys(io.sockets.clients().sockets);
+    let roomsAndSockets = Object.keys(io.sockets.adapter.rooms);
+    let rooms = roomsAndSockets.filter(roomOrSocket => !sockets.includes(roomOrSocket));
+    return rooms;
+}
+
+function notifyClientsPlayerDeleted(socket) {
+    // notify client that playerId is no longer valid
+    socket.emit('delete-player');
+            
+    // send all players the new player list
+    emitPlayersUpdate(socket);
+}
+
+function roomChange(socket, action, room) {
+    console.log(`${action}ing room: ${room}`);
+    
+    socket.currentRoom = 'join' === action ? room : null;
+
+    let beforeRooms = getRooms();
+
+    socket[action]([room], (err) => {
+        io.in(room).clients((err, clients) => {
+            db.players.find({ socketId: {$in: clients } })
+                .toArray()
+                .then (players => {
+                    io.to(room).emit('room-players-update', players);
+            });
+        });
+  
+        let afterRooms = getRooms();
+
+        let dif = 'join' === action
+            ? roomDif(beforeRooms, afterRooms)
+            : roomDif(afterRooms, beforeRooms);
+        
+        if (dif) {
+            'join' === action
+                ? console.log('Create Room: ' + dif.join(', '))
+                : console.log('Destroy Room: ' + dif.join(', '));
+                
+            io.sockets.emit('rooms-update', afterRooms);
+        }
+  
+      });
+}
