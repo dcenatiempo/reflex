@@ -7,19 +7,27 @@
       </li>
     </ul>
     <input v-model="newMessage" type="text" placeholder="Enter Message" />
-    <button @click="sendMessage">Send Message</button>
+    <button @click="sendMessage({ mode, message: newMessage })">Send Message</button>
   </div>
 </template>
 
 <script>
-import { mapState } from 'vuex';
+import { mapState, mapActions } from 'vuex';
 export default {
   name: 'chat-widget',
   props: {
     messages: {
       type: Array,
-      default: () => []
-    }
+      default: () => [],
+    },
+    playerId: {
+      type: String,
+      default: '',
+    },
+    mode: {
+      type: String,
+      default: 'arena', // 'room'
+    },
   },
   data() {
     return {
@@ -27,13 +35,11 @@ export default {
     };
   },
   computed: {
-    ...mapState(['socket', 'players', 'playerId', 'currentRoom']),
+    ...mapState(['socket', 'currentRoom']),
   },
   watch: {},
   methods: {
-    sendMessage() {
-      this.socket.emit('send-arena-chat', this.newMessage);
-    }
+    ...mapActions(['sendMessage'])
   },
   mounted() {},
 }

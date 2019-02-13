@@ -6,7 +6,10 @@
       :players="players"
       :playerId="playerId" />
     <room-list />
-    <chat-widget :messages="arenaChat" />
+    <chat-widget
+      :messages="arenaChat"
+      :playerId="playerId"
+      mode="arena"/>
     The arena page will have:
     <ul>
       <li>General chat for all users</li>

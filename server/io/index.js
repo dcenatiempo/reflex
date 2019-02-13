@@ -1,14 +1,14 @@
 const io = require('socket.io')();
-const db = require('../db').get();
-const ObjectID = require('mongodb').ObjectID;
-const events = require('./events');
+const events = require('./eventHandlers');
+const { on } = require('./events');
+
 
 events.register(io);
 
 io.on('connection', function (socket) {
   events.connection(socket);
   
-  socket.conn.on('heartbeat', () => { events.heartbeat(socket) });
+  socket.conn.on(on.HEARTBEAT, () => { events.heartbeat(socket) });
 
   socket.on('new-player', (name) => { events.newPlayer(socket, name) });
 
@@ -22,10 +22,9 @@ io.on('connection', function (socket) {
 
   socket.on('send-arena-chat', (message) => { events.sendArenaChat(socket, message) });
 
-  socket.on('send-room-chat', (payload) => { events.sendRoomChat(socket, payload) });
+  socket.on('send-room-chat', (message) => { events.sendRoomChat(socket, message) });
 
   socket.on('disconnect', (reason) => { events.disconnect(socket, reason) });
-
 });
 
 module.exports = io;

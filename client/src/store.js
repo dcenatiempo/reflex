@@ -53,7 +53,7 @@ export default new Vuex.Store({
 
     // Chat
     addArenaChat: (state, message) => state.arenaChat = state.arenaChat.concat(message),
-    addRoomChat: (state, message) => state.roomChat.concat(message),
+    addRoomChat: (state, message) => {debugger; state.roomChat = state.roomChat.concat(message);},
   },
   actions: {
     // Players
@@ -83,5 +83,9 @@ export default new Vuex.Store({
     },
 
     // Chat
+    sendMessage: (context, { mode, message }) => {
+      debugger
+      context.state.socket.emit(`send-${mode}-chat`, message);
+    }
   }
 })
