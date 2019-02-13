@@ -17,9 +17,17 @@ export default {
   data() {
     return {};
   },
-  computed: {
-    ...mapState(['players', 'playerId']),
+  props: {
+    players: {
+      type: Array,
+      default: () => []
+    },
+    playerId: {
+      type: String,
+      default: ''
+    },
   },
+  computed: {},
   watch: {},
   methods: {},
   mounted() {},

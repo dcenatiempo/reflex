@@ -4,19 +4,53 @@ const ObjectID = require('mongodb').ObjectID;
 
 
 io.on('connection', function (socket) {
-  let playerId = socket.handshake.query.playerId
+  let playerId = socket.handshake.query.playerId;
+  let currentRoom = socket.handshake.query.currentRoom;
   playerId = 'null' == playerId ? null : ObjectID(playerId);
+  currentRoom = 'null' == currentRoom ? null : currentRoom;
 
   if (playerId) {
     // update timestamp
-    db.players.updateOne({ _id: playerId }, { $set: { updatedAt: new Date()} })
+    db.players.findOneAndUpdate({ _id: playerId }, { $set: { updatedAt: new Date(), socketId: socket.id} })
     .then (res => {
-      if (0 == res.matchedCount) {
-        socket.emit('delete-user');
+      if (0 == res.lastErrorObject.updatedExisting) {
+        socket.emit('delete-player');
         // get all players
         db.players.find().toArray().then(allPlayers => {
           socket.emit('players-update', allPlayers);
         });
+      } else {
+
+        if (currentRoom) {
+          console.log('Re-entering Room: ' + currentRoom);
+      
+          let sockets = Object.keys(io.sockets.clients().sockets);
+          let rooms = Object.keys(io.sockets.adapter.rooms);
+          let beforeRooms = rooms.filter(room => !sockets.includes(room));
+      
+          socket.join([currentRoom], (err) => {
+            io.in(currentRoom).clients((err, clients) => {
+              db.players.find({ socketId: {$in: clients } }).toArray()
+                .then (players => {
+                  io.to(currentRoom).emit('room-players-update', players);
+                });
+              });
+            console.log('re-entering- - - - - - - - - -')
+      
+            let sockets = Object.keys(io.sockets.clients().sockets);
+            let rooms = Object.keys(io.sockets.adapter.rooms);
+            let afterRooms = rooms.filter(room => !sockets.includes(room));
+      
+            let dif = roomDif(beforeRooms, afterRooms);
+            if (dif) {
+              console.log('New Room: ' + dif.join(', '));
+              io.sockets.emit('rooms-update', afterRooms);
+            }
+      
+          });
+        }
+
+
       }
     }).catch( err => {console.log(err)});
   }
@@ -35,7 +69,7 @@ io.on('connection', function (socket) {
     db.players.updateOne({ _id: playerId }, { $set: { updatedAt: new Date()} })
     .then (res => {
       if (0 == res.matchedCount) {
-        socket.emit('delete-user');
+        socket.emit('delete-player');
         // get all players
         db.players.find().toArray().then(allPlayers => {
           socket.emit('players-update', allPlayers);
@@ -51,15 +85,15 @@ io.on('connection', function (socket) {
       name,
       wins: 0,
       gamesPlayed: 0,
-      updateAt: new Date()
+      updatedAt: new Date(),
+      socketId: socket.id
     }
 
     // add player to database
     db.players.insertOne(player).then( (res) => {
       playerId = res.insertedId;
-      
       // send player their player id
-      socket.emit('player-id', res.insertedId);
+      socket.emit('add-player', res.insertedId);
       
       // get updated player list
       db.players.find().toArray().then(allPlayers => {
@@ -69,23 +103,42 @@ io.on('connection', function (socket) {
     });
   });
 
+  socket.on('delete-player', (playerId) => {
+    // remove player from players & rooms collection
+    db.players.deleteOne({_id: ObjectID(playerId)}, (err, res) => {
+      if(err) console.log(err);
+      // console.log(res)
+      console.log('player deleted');
+      // get updated player list
+      db.players.find().toArray().then(allPlayers => {
+        // send playerlist to all players
+        io.sockets.emit('players-update', allPlayers);
+      }); 
+    });
+  });
+
   socket.on('enter-room', (room) => {
+    currentRoom = room;
     console.log('Entering Room: ' + room);
 
     let sockets = Object.keys(io.sockets.clients().sockets);
     let rooms = Object.keys(io.sockets.adapter.rooms);
     let beforeRooms = rooms.filter(room => !sockets.includes(room));
-    console.log(beforeRooms)
     
-
     socket.join([room], (err) => {
+      io.in(room).clients((err, clients) => {
+        db.players.find({ socketId: {$in: clients } }).toArray()
+          .then (players => {
+            io.to(room).emit('room-players-update', players);
+          });
+        });
+      console.log('entering - - - - - - - - - -')
+
       let sockets = Object.keys(io.sockets.clients().sockets);
       let rooms = Object.keys(io.sockets.adapter.rooms);
       let afterRooms = rooms.filter(room => !sockets.includes(room));
-      console.log(afterRooms)
 
       let dif = roomDif(beforeRooms, afterRooms);
-      console.log(dif);
       if (dif) {
         console.log('New Room: ' + dif.join(', '));
         io.sockets.emit('rooms-update', afterRooms);
@@ -96,21 +149,26 @@ io.on('connection', function (socket) {
 
   socket.on('leave-room', (room) => {
     console.log('Leaving Room: ' + room);
+    currentRoom = null;
 
     let sockets = Object.keys(io.sockets.clients().sockets);
     let rooms = Object.keys(io.sockets.adapter.rooms);
     let beforeRooms = rooms.filter(room => !sockets.includes(room));
-    console.log(beforeRooms)
     
+    socket.leave(room, (err) => {
+      io.in(room).clients((err, clients) => {
+        db.players.find({ socketId: {$in: clients } }).toArray()
+          .then (players => {
+            io.to(room).emit('room-players-update', players);
+          });
+        });
+      console.log('leaving - - - - - - - - - -')
 
-    socket.leave([room], (err) => {
       let sockets = Object.keys(io.sockets.clients().sockets);
       let rooms = Object.keys(io.sockets.adapter.rooms);
       let afterRooms = rooms.filter(room => !sockets.includes(room));
-      console.log(afterRooms)
 
       let dif = roomDif(afterRooms, beforeRooms);
-      console.log(dif);
       if (dif) {
         console.log('Destroy Room: ' + dif.join(', '));
         io.sockets.emit('rooms-update', afterRooms);

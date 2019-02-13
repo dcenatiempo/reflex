@@ -24,7 +24,7 @@ const newPlayer = function(name) {
         name,
         wins: 0,
         gamesPlayed: 0,
-        updateAt: new Date()
+        updatedAt: new Date()
     }
 
     // add player to database

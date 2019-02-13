@@ -42,15 +42,9 @@ export default {
   },
   mounted() {
     if (this.playerId)
-      this.$router.push('arena');
-  
+      this.$router.replace({ path: '/arena' });
   },
-  watch: {
-    playerId(id) {
-      if (!id) return;
-      this.$router.push('arena');
-    }
-  },
+  watch: {},
 }
 </script>
 

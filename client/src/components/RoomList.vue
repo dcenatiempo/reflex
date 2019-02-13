@@ -7,12 +7,12 @@
       </li>
     </ul>
     <input v-model="newRoom" type="text" placeholder="Enter Room Name" />
-    <button @click="createRoom">Create New Room</button>
+    <button @click="joinRoom(newRoom)">Create New Room</button>
   </div>
 </template>
 
 <script>
-import { mapState, mapMutations } from 'vuex';
+import { mapState, mapMutations, mapActions } from 'vuex';
 export default {
   name: 'room-list',
   props: {},
@@ -26,11 +26,7 @@ export default {
   },
   watch: {},
   methods: {
-    ...mapMutations(['setRoom']),
-    createRoom() {
-      this.socket.emit('enter-room', this.newRoom);
-      this.setRoom(this.newRoom);
-    }
+    ...mapActions(['joinRoom']),
   },
   mounted() {},
 }

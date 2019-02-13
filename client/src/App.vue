@@ -9,53 +9,80 @@
 </template>
 
 <script>
-import { mapState, mapMutations } from 'vuex';
+import { mapState, mapMutations, mapActions } from 'vuex';
 
 export default {
   name: 'app',
   computed: {
-    ...mapState(['socket', 'playerId']),
+    ...mapState(['socket', 'playerId', 'currentRoom']),
+    path() {
+      let playerId = this.playerId;
+      let room = this.currentRoom;
+
+      if (!playerId)
+        return '/';
+
+      if (!room)
+        return '/arena';
+
+      return `/arena/${this.currentRoom}`;
+    }
   },
   methods: {
       ...mapMutations(['authenticatePlayer', 'updatePlayerList']),
+      ...mapActions(['deletePlayer', 'addPlayer', 'leaveRoom']),
   },
   mounted() {
+    let vm = this;
     this.socket.open();
 
     this.socket.on('disconnect', (reason) => {
       console.log(reason);
       if (reason === 'io server disconnect') {
         // the disconnection was initiated by the server, you need to reconnect manually
-        this.socket.connect();
+        vm.socket.connect();
       }
       // else the socket will automatically try to reconnect
     });
 
     this.socket.on('reconnect_attempt', () => {
-      this.socket.io.opts.query = {
+      debugger
+      vm.socket.io.opts.query = {
         playerId: window.sessionStorage.getItem('playerId'),
+        currentRoom: window.sessionStorage.getItem('currentRoom')
       }
     });
 
-    this.socket.on('delete-user', () => {
-      this.authenticatePlayer(null);
-      window.sessionStorage.removeItem('playerId');
+    this.socket.on('delete-player', () => {
+      vm.deletePlayer();
     });
 
     this.socket.on('players-update', (playerList) => {
-      console.log(playerList);
-      this.updatePlayerList(playerList);
+      vm.updatePlayerList(playerList);
     });
 
-    this.socket.on('player-id', (id) => {
+    this.socket.on('add-player', (id) => {
       if (!id) return;
-      this.authenticatePlayer(id);
-      window.sessionStorage.setItem('playerId', id);
+      vm.addPlayer(id);
     });
+  },
+  watch: {
+    path(path) {
+      this.$router.push(path);
+    },
+    '$route'(to, from) {
+      if ('room' === from.name && this.currentRoom != null) {
+        debugger
+        this.leaveRoom(this.currentRoom);
+        return
+      } 
+      if ('home' === to.name) {
+        // this.deletePlayer();
+      }
+      
+    }
 
-    if (this.playerId)
-      this.$router.push({ path: '/arena' });
-  }
+  },
 }
 </script>
 
