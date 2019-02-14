@@ -57,6 +57,7 @@ const newPlayer = function(socket, name) {
         wins: 0,
         gamesPlayed: 0,
         updatedAt: new Date(),
+        createdAt: new Date(),
         socketId: socket.id
     }
 

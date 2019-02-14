@@ -15,7 +15,7 @@ exports.connect = function(url, done) {
     state.db = db.db('reflex');
     state.rooms = state.db.collection('rooms');
     state.players = state.db.collection('players');
-    // state.players.deleteMany();
+    state.players.deleteMany();
     state.players.dropIndexes();
     state.players.createIndex( { 'name': 1 }, { unique: true } );
     state.players.createIndex( { 'updatedAt': 1 }, { expireAfterSeconds: 30 } );
