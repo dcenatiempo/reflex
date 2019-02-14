@@ -46,7 +46,6 @@ export default {
     });
 
     this.socket.on('reconnect_attempt', () => {
-      debugger
       vm.socket.io.opts.query = {
         playerId: window.sessionStorage.getItem('playerId'),
         currentRoom: window.sessionStorage.getItem('currentRoom')
@@ -72,7 +71,6 @@ export default {
     },
     '$route'(to, from) {
       if ('room' === from.name && this.currentRoom != null) {
-        debugger
         this.leaveRoom(this.currentRoom);
         return
       } 

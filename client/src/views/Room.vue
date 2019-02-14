@@ -40,8 +40,8 @@ export default {
     }
   },
   computed: {
-    ...mapState(['socket', 'players', 'playerId', 'currentRoom', 'roomChat']),
-    ...mapGetters(['roomPlayers']),
+    ...mapState(['socket', 'players', 'playerId', 'currentRoom']),
+    ...mapGetters(['roomPlayers', 'roomChat']),
   },
   methods: {
     ...mapMutations(['updateRoomList', 'addRoomChat', 'updateRoomPlayers']),
@@ -54,11 +54,9 @@ export default {
     if (!this.currentRoom)
       this.$router.replace({ path: '/arena' });
     this.socket.on('update-room-chat', message => {
-      debugger
       vm.addRoomChat(message);
     });
     this.socket.on('room-players-update', players => {
-      debugger
       vm.updateRoomPlayers(players);
     })
   

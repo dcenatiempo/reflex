@@ -40,6 +40,8 @@ export default new Vuex.Store({
   getters: {
     playerInfo: (state) => state.players.find(player => state.playerId === player._id),
     roomPlayers: (state) => state.roomPlayers,
+    arenaChat: (state) => state.arenaChat.map(message => Object.assign({}, message, { name: state.players.find(player => player._id == message.playerId).name })),
+    roomChat: (state) => state.roomChat.map(message => Object.assign({}, message, { name: state.roomPlayers.find(player => player._id == message.playerId).name })),
   },
   mutations: {
     // Players
@@ -75,7 +77,6 @@ export default new Vuex.Store({
       context.state.socket.emit('enter-room', room);
     },
     leaveRoom: (context, room) => {
-      debugger
       context.commit('setRoom', null);
       context.commit('updateRoomPlayers', [])
       window.sessionStorage.removeItem('currentRoom');
@@ -84,7 +85,6 @@ export default new Vuex.Store({
 
     // Chat
     sendMessage: (context, { mode, message }) => {
-      debugger
       context.state.socket.emit(`send-${mode}-chat`, message);
     }
   }

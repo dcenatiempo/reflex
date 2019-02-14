@@ -23,7 +23,7 @@
 <script>
 // @ is an alias to /src
 // import NewPlayerInpu from '@/components/HelloWorld.vue'
-import { mapState, mapMutations, mapActions } from 'vuex';
+import { mapState, mapGetters, mapMutations, mapActions } from 'vuex';
 import PlayerList from '@/components/PlayerList';
 import RoomList from '@/components/RoomList';
 import ChatWidget from '@/components/ChatWidget';
@@ -41,7 +41,8 @@ export default {
     }
   },
   computed: {
-    ...mapState(['socket', 'players', 'playerId', 'currentRoom', 'arenaChat']),
+    ...mapState(['socket', 'players', 'playerId', 'currentRoom']),
+    ...mapGetters(['arenaChat']),
   },
   methods: {
     ...mapMutations(['updateRoomList', 'addArenaChat']),
