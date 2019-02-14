@@ -1,5 +1,5 @@
 <template>
-  <div id="room-list">
+  <div id="room-list" class="widget">
     <h2>Rooms</h2>
     <ul>
       <li v-for="room in rooms" :key="room">
@@ -12,7 +12,7 @@
 </template>
 
 <script>
-import { mapState, mapMutations, mapActions } from 'vuex';
+import { mapState, mapActions } from 'vuex';
 export default {
   name: 'room-list',
   props: {},
@@ -34,6 +34,6 @@ export default {
 
 <style lang="scss">
 #room-list {
-  border: 1px solid lightgray;
+
 }
 </style>

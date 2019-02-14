@@ -1,19 +1,26 @@
 <template>
-  <div id="player-list">
+  <div id="player-list" class="widget">
     <h2>Players</h2>
-    <ul>
-      <li v-for="player in players" :key="player._id">
-        <span :class="{ me: playerId === player._id }">{{player.name}}</span>
+    <scrollable-ul :watch-data="players" :max-height="100">
+      <li v-for="player in players" :key="player._id" :class="{ me: playerId === player._id }">
+        <span>{{player.name}}</span>
+        <span>{{player.wins}}</span>
+        <span>{{player.gamesPlayed}}</span>
+        <span>{{player.createdAt}}</span>
       </li>
-    </ul>
+    </scrollable-ul>
   </div>
 </template>
 
 <script>
-import { mapState } from 'vuex';
+// import { mapState } from 'vuex';
+import ScrollableUl from './ScrollableUL';
+
 export default {
   name: 'player-list',
-  props: {},
+  components: {
+    ScrollableUl,
+  },
   data() {
     return {};
   },
@@ -36,7 +43,6 @@ export default {
 
 <style lang="scss">
 #player-list {
-  border: 1px solid lightgray;
   .me {
     color: red;
   }

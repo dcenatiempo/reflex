@@ -1,11 +1,11 @@
 <template>
-  <div id="chat-widget">
+  <div id="chat-widget" class="widget">
     <h2>Chat</h2>
-    <ul>
+    <scrollable-ul :watch-data="messages" :max-height="400">
       <li v-for="(message, index) in messages" :key="index" :class="{ me: playerId === message.playerId }">
         <div class="chat-bubble">{{message.message}}<span class="name">{{message.name}}</span></div>
       </li>
-    </ul>
+    </scrollable-ul>
     <button-input
       @submit="handleSubmit"
       placeholder="Say something..."
@@ -16,11 +16,13 @@
 <script>
 import { mapState, mapActions } from 'vuex';
 import ButtonInput from './ButtonInput';
+import ScrollableUl from './ScrollableUL';
 
 export default {
   name: 'chat-widget',
   components: {
     ButtonInput,
+    ScrollableUl,
   },
   props: {
     messages: {
@@ -45,42 +47,21 @@ export default {
   computed: {
     ...mapState(['socket', 'currentRoom']),
   },
-  watch: {
-    messages() {
-      let vm = this;
-      setTimeout(() => {
-        debugger
-        vm.chatElement.scrollTop = vm.chatElement.scrollHeight;
-      }, 0);
-    }
-  },
+  watch: {},
   methods: {
     ...mapActions(['sendMessage']),
     handleSubmit(input) {
-      debugger
       this.sendMessage({ mode: this.mode, message: input });
     }
   },
-  mounted() {
-    this.chatElement = document.querySelector('#chat-widget ul');
-  },
+  mounted() {},
 }
 </script>
 
 <style lang="scss">
 #chat-widget {
-  padding: 1em;
-  border: 1px solid lightgray;
-  border-radius: 5px;
-  margin: .5em;
 
   ul {
-    padding: 0;
-    margin: 0;
-    list-style-type: none;
-    max-height: 400px;
-    overflow-y: auto;
-    scroll-behavior: smooth;
 
     li {
       display: flex;

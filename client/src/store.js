@@ -55,7 +55,7 @@ export default new Vuex.Store({
 
     // Chat
     addArenaChat: (state, message) => state.arenaChat = state.arenaChat.concat(message),
-    addRoomChat: (state, message) => {debugger; state.roomChat = state.roomChat.concat(message);},
+    addRoomChat: (state, message) => state.roomChat = state.roomChat.concat(message),
   },
   actions: {
     // Players

@@ -35,7 +35,6 @@ export default {
   methods: {
     handleInput() {
       if (this.input.length <= 0) return;
-      debugger
       this.$emit('submit', this.input);
       this.input = '';
     }
