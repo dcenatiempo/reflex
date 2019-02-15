@@ -36,9 +36,9 @@ export default {
     },
   },
   watch: {
-    input(input) {
-      if (input >= this.maxLength) {
-        this.input = input.substring(0, this.maxLength);
+    input() {
+      if (this.input.length >= this.maxLength) {
+        this.input = this.input.substring(0, this.maxLength);
       }
     }
   },

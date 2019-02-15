@@ -71,6 +71,17 @@ export default {
       margin-bottom: 1.5rem;
       position: relative;
 
+      .chat-bubble {
+        position: relative;
+        padding: 1rem;
+        border-radius: 8px;
+        color: white;
+        font-weight: bold;
+        max-width: 80%;
+        hyphens: auto;
+        word-break: break-word;
+        text-align: left;
+      }
       &.me {
         justify-content: flex-end;
 
@@ -88,27 +99,19 @@ export default {
           background-color: rgb(238, 97, 231);
         }
         .name {
-            font-weight: normal;
-            position: absolute;
-            color: gray;
-            top: 0;
-            left: 0.5rem;
-            transform: translateY(-100%);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            width: 100%;
-            max-width: 80%;
-            text-align: left;
-          }
-      }
-      .chat-bubble {
-        position: relative;
-        padding: 1rem;
-        border-radius: 8px;
-        color: white;
-        font-weight: bold;
-        max-width: 80%;
+          font-weight: normal;
+          position: absolute;
+          color: gray;
+          top: 0;
+          left: 0.5rem;
+          transform: translateY(-100%);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          width: 100%;
+          max-width: 80%;
+          text-align: left;
+        }
       }
     }
   }

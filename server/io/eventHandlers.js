@@ -107,7 +107,7 @@ const requestRooms = function(socket) {
 
 const sendArenaChat = function(socket, message) {
     const payload = {
-        message,
+        message: message.substring(0,255),
         playerId: socket.playerId
     };
     io.sockets.emit(emit.UPDATE_ARENA_CHAT, payload);
@@ -115,7 +115,7 @@ const sendArenaChat = function(socket, message) {
 
 const sendRoomChat = function(socket, message) {
     const payload = {
-        message,
+        message: message.substring(0,255),
         playerId: socket.playerId
     }
 
