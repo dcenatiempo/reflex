@@ -100,8 +100,8 @@ const leaveRoom = function(socket, room) {
     roomChange(socket, 'leave', room);
 }
 
-const requestRooms = function(socket) {
-    let rooms = getRooms();
+const requestRooms = async function(socket) {
+    let rooms = await getRooms();
     socket.emit(emit.ROOMS_UPDATE, rooms);
 }
 
@@ -146,7 +146,8 @@ module.exports = {
 };
 
 function roomDif(before, after) {
-    let dif = [...after].filter(x => !before.includes(x));
+    let dif = after.filter(item => !before.find(room => room.name === item.name));
+    console.log(dif)
 
     if (dif.length === 0)
         return null;
@@ -160,11 +161,22 @@ function emitPlayersUpdate() {
     }).catch(e=>console.log(e)); 
 }
 
-function getRooms() {
+async function getRooms() {
     let sockets = Object.keys(io.sockets.clients().sockets);
     let roomsAndSockets = Object.keys(io.sockets.adapter.rooms);
     let rooms = roomsAndSockets.filter(roomOrSocket => !sockets.includes(roomOrSocket));
-    return rooms;
+
+    let roomPromises = rooms.map(async room => {
+        let count = 0;
+        await io.in(room).clients( async (err, clients) => {
+                count = clients.length;
+        });
+        return {
+            name: room,
+            playerCount: count
+        };
+    });
+    return Promise.all(roomPromises);
 }
 
 function notifyClientsPlayerDeleted(socket) {
@@ -175,14 +187,15 @@ function notifyClientsPlayerDeleted(socket) {
     emitPlayersUpdate(socket);
 }
 
-function roomChange(socket, action, room) {
+async function roomChange(socket, action, room) {
     console.log(`${action}ing room: ${room}`);
     
     socket.currentRoom = 'join' === action ? room : null;
 
-    let beforeRooms = getRooms();
+    let beforeRooms = await getRooms();
 
-    socket[action]([room], (err) => {
+    // join or leave room
+    socket[action]([room], async (err) => {
         io.in(room).clients((err, clients) => {
             db.players.find({ socketId: {$in: clients } })
                 .toArray()
@@ -191,7 +204,7 @@ function roomChange(socket, action, room) {
             });
         });
   
-        let afterRooms = getRooms();
+        let afterRooms = await getRooms();
 
         let dif = 'join' === action
             ? roomDif(beforeRooms, afterRooms)
@@ -199,11 +212,11 @@ function roomChange(socket, action, room) {
         
         if (dif) {
             'join' === action
-                ? console.log('Create Room: ' + dif.join(', '))
-                : console.log('Destroy Room: ' + dif.join(', '));
-                
-            io.sockets.emit(emit.ROOMS_UPDATE, afterRooms);
+                ? console.log('Create Room: ' + dif[0].name)
+                : console.log('Destroy Room: ' + dif[0].name);
         }
+
+        io.sockets.emit(emit.ROOMS_UPDATE, afterRooms);
   
       });
 }

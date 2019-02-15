@@ -1,7 +1,15 @@
 <template>
   <form v-on:submit.prevent="handleInput" class="button-input">
-    <input v-model="input" type="text" :placeholder="placeholder" v-on:keyup.enter="handleInput" />
-    <button :disabled="disabled" @click="handleInput">{{buttonText}}</button>
+    <input
+        type="text"
+        :placeholder="placeholder"
+        v-model="input"
+        v-on:keyup.enter="handleInput" />
+    <button
+        :disabled="disabled"
+        @click="handleInput">
+      {{buttonText}}
+    </button>
   </form>
 </template>
 
@@ -37,6 +45,7 @@ export default {
   },
   watch: {
     input() {
+      this.$emit('input', this.input);
       if (this.input.length >= this.maxLength) {
         this.input = this.input.substring(0, this.maxLength);
       }
