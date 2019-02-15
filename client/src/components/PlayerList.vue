@@ -1,12 +1,16 @@
 <template>
   <div id="player-list" class="widget">
     <h2>Players</h2>
+    <li class="ul-header">
+      <span class="name">Name</span>
+      <span class="record">Record</span>
+      <span class="time">Alive since</span>
+    </li>
     <scrollable-ul :watch-data="players" :max-height="100">
       <li v-for="player in players" :key="player._id" :class="{ me: playerId === player._id }">
-        <span>{{player.name}}</span>
-        <span>{{player.wins}}</span>
-        <span>{{player.gamesPlayed}}</span>
-        <span>{{player.createdAt}}</span>
+        <span class="name" :title="player.name">{{player.name}}</span>
+        <span class="record">{{playerRecord(player)}}</span>
+        <span class="time">{{$moment(player.createdAt).fromNow()}}</span>
       </li>
     </scrollable-ul>
   </div>
@@ -36,15 +40,49 @@ export default {
   },
   computed: {},
   watch: {},
-  methods: {},
+  methods: {
+    playerRecord(player) {
+      return player.wins + '/' + player.gamesPlayed;
+    }
+  },
   mounted() {},
 }
 </script>
 
 <style lang="scss">
 #player-list {
-  .me {
-    color: red;
-  }
+  // .scrollable-ul {
+
+    li {
+      display: grid;
+      grid-template-columns: minmax(90px, 150px) 65px minmax(90px, 200px);
+      grid-gap: 10px;
+      align-items: start;
+
+      &.me {
+        color: red;
+      }
+      &.ul-header {
+        font-weight: bold;
+        font-size: 1.1rem;
+        align-items: end;
+      }
+      span {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .name {
+        text-align: left;
+      }
+      .record {
+
+      }
+      .time {
+        text-align: left;
+      }
+    }
+  // }
+  
 }
 </style>

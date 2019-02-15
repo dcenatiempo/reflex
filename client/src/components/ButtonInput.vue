@@ -18,6 +18,10 @@ export default {
     buttonText: {
       type: String,
       default: 'Submit',
+    },
+    maxLength: {
+      type: Number,
+      default: 255,
     }
   },
   data() {
@@ -31,7 +35,13 @@ export default {
       return false;
     },
   },
-  watch: {},
+  watch: {
+    input(input) {
+      if (input >= this.maxLength) {
+        this.input = input.substring(0, this.maxLength);
+      }
+    }
+  },
   methods: {
     handleInput() {
       if (this.input.length <= 0) return;
@@ -52,11 +62,11 @@ export default {
     flex-grow: 4;
     flex-basis: 100px;
     border: none;
-    padding: 1em;
+    padding: 1rem;
     border-top-left-radius: 5px;
     border-bottom-left-radius: 5px;
     background: rgb(240, 240, 240);
-    font-size: 1em;
+    font-size: 1rem;
   }
   button {
     flex-grow: 1;
@@ -66,7 +76,7 @@ export default {
     color: white;
     border-bottom-right-radius: 5px;
     border-top-right-radius: 5px;
-    font-size: 1em;
+    font-size: 1rem;
     transition: all ease 300ms;
 
     &[disabled] {

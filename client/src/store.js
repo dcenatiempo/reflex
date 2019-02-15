@@ -40,7 +40,11 @@ export default new Vuex.Store({
   getters: {
     playerInfo: (state) => state.players.find(player => state.playerId === player._id),
     roomPlayers: (state) => state.roomPlayers,
-    arenaChat: (state) => state.arenaChat.map(message => Object.assign({}, message, { name: state.players.find(player => player._id == message.playerId).name })),
+    arenaChat: (state) => state.arenaChat.map(message => {
+        const player = state.players.find(player => player._id == message.playerId);
+        const name = player ? player.name : 'player has left the arena...';
+        return Object.assign({}, message, { name });
+    }),
     roomChat: (state) => state.roomChat.map(message => Object.assign({}, message, { name: state.roomPlayers.find(player => player._id == message.playerId).name })),
   },
   mutations: {

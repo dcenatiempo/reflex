@@ -51,7 +51,7 @@ export default {
 <style lang="scss">
 #home {
   h1 {
-    font-size: 3em;
+    font-size: 3rem;
   }
   .warning {
     color: red;
@@ -60,12 +60,12 @@ export default {
     bottom: 0;
   }
   .arena-btn {
-    font-size: 2em;
+    font-size: 2rem;
     background: orange;
     color: white;
     border: none;
     border-radius: 5px;
-    padding: .5em;
+    padding: .5rem;
     width: 100%;
 
     &[disabled] {
@@ -76,9 +76,9 @@ export default {
     width: 100%;
 
     input {
-      font-size: 1.5em;
+      font-size: 1.5rem;
       width: 100%;
-      margin-bottom: 1em;
+      margin-bottom: 1rem;
     }
   }
   .name-form {

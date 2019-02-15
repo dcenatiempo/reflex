@@ -1,10 +1,12 @@
 <template>
-  <ul
-      ref="ul"
-      class="scrollable-ul"
-      :style="`max-height: ${maxHeight}px`">
-    <slot />
-  </ul>
+  <div class="scrollable-ul">
+    <ul
+        ref="ul"
+        :style="`max-height: ${maxHeight}px`">
+      <slot />
+    </ul>
+    <div class="gradient"></div>
+  </div>
 </template>
 
 <script>
@@ -37,11 +39,23 @@ export default {
 </script>
 
 <style lang="scss">
-ul.scrollable-ul {
+.scrollable-ul {
+  position: relative;
+  padding: 1rem 0;
+
+  ul {
     padding: 0;
     margin: 0;
     list-style-type: none;
     overflow-y: auto;
     scroll-behavior: smooth;
+  }
+  .gradient {
+      position: absolute;
+      width: 100%;
+      top: 0;
+      height: 2rem;
+      // background: linear-gradient(to bottom, rgba(255,255,255,1) 0%,rgba(255,255,255,0) 100%); 
+    }
 }
 </style>

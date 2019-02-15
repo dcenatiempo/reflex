@@ -3,13 +3,15 @@
     <h2>Chat</h2>
     <scrollable-ul :watch-data="messages" :max-height="400">
       <li v-for="(message, index) in messages" :key="index" :class="{ me: playerId === message.playerId }">
-        <div class="chat-bubble">{{message.message}}<span class="name">{{message.name}}</span></div>
+        <div class="chat-bubble">{{message.message}}</div>
+        <span class="name">{{message.name}}</span>
       </li>
     </scrollable-ul>
     <button-input
       @submit="handleSubmit"
       placeholder="Say something..."
-      buttonText="Send"/>
+      buttonText="Send"
+      :max-length="255"/>
   </div>
 </template>
 
@@ -62,43 +64,47 @@ export default {
 #chat-widget {
 
   ul {
+    padding-top: 1.5rem;
 
     li {
       display: flex;
-      margin-bottom: 2em;
-
+      margin-bottom: 1.5rem;
+      position: relative;
 
       &.me {
         justify-content: flex-end;
 
         .chat-bubble {
           background-color: rgb(48, 190, 238);
-          
-          .name {
-            display: none;
-          }
         }
-        
+        .name {
+          display: none;
+        }
       }
       &:not(.me) {
         justify-content: flex-start;
 
         .chat-bubble {
           background-color: rgb(238, 97, 231);
-          
-          .name {
+        }
+        .name {
             font-weight: normal;
             position: absolute;
             color: gray;
             top: 0;
-            left: 0.5em;
+            left: 0.5rem;
             transform: translateY(-100%);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+            max-width: 80%;
+            text-align: left;
           }
-        }
       }
       .chat-bubble {
         position: relative;
-        padding: 1em;
+        padding: 1rem;
         border-radius: 8px;
         color: white;
         font-weight: bold;
