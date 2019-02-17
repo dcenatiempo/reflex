@@ -22,18 +22,17 @@ export default new Vuex.Store({
     },
     // playerInfo: (state) => state.players.find(player => state.playerId === player.id),
     roomPlayers: (state) => {
+      debugger
       let room = state.rooms.find(room => state.currentRoom === room.name);
       let playerArray = room ? room.players : [];
       return state.players.filter(player => playerArray.includes(player.id));
     },
     arenaChat: (state) => state.arenaChat.map(message => {
-        debugger;
         const player = state.players.find(player => player.id == message.playerId);
         const name = player ? player.name : 'player has left the arena...';
         return Object.assign({}, message, { name });
     }),
     roomChat: (state) => state.roomChat.map(message => {
-        debugger;
         const player = state.players.find(player => player.id == message.playerId);
         const name = player ? player.name : 'player has left the arena...';
         return Object.assign({}, message, { name });
@@ -62,8 +61,10 @@ export default new Vuex.Store({
           return state.fb.auth.currentUser.updateProfile({ displayName: name });
         }).then( () => {
           commit('setCurrentUser', state.fb.auth.currentUser);
+          debugger
           return state.fb.players.doc(state.fb.auth.currentUser.uid).get();
         }).then( doc => {
+          debugger
           if (doc.exists) {
               let player = {
                 name,
@@ -82,7 +83,7 @@ export default new Vuex.Store({
               return state.fb.players.doc(state.fb.auth.currentUser.uid).set(newPlayer)
           }
       }).catch( error => {
-        debugger
+        
         console.log(error);
       });
     },
@@ -97,7 +98,7 @@ export default new Vuex.Store({
         commit('clearArenaChat');
         window.sessionStorage.removeItem('currentRoom');
       }).catch( error => {
-        debugger
+        
         console.error('Sign Out Error', error);
       });
     },
@@ -129,7 +130,6 @@ export default new Vuex.Store({
       commit('setRoom', null);
       commit('clearRoomChat');
       window.sessionStorage.removeItem('currentRoom');
-      debugger
       let room = state.rooms.find(room => roomName === room.name);
       if (room) {
         let newPlayers = room.players.filter(player => player !== state.currentUser.id)
@@ -165,7 +165,7 @@ export default new Vuex.Store({
         state.fb.chat.doc('arenaChat').set({
           chat: newChat
         }).then( () => {
-          debugger
+          
         }).catch( e => {
           console.log(e);
         });
@@ -174,7 +174,7 @@ export default new Vuex.Store({
       state.fb.chat.doc('arenaChat').update({
         chat: newChat
       }).then( () => {
-        debugger
+        
       }).catch( e => {
         console.log(e);
       });
@@ -189,7 +189,7 @@ export default new Vuex.Store({
         state.fb.chat.doc(`${state.currentRoom}Chat`).set({
           chat: newChat
         }).then( () => {
-          debugger
+          
         }).catch( e => {
           console.log(e);
         });
@@ -198,7 +198,7 @@ export default new Vuex.Store({
       state.fb.chat.doc(`${state.currentRoom}Chat`).update({
         chat: newChat
       }).then( () => {
-        debugger
+        
       }).catch( e => {
         console.log(e);
       });

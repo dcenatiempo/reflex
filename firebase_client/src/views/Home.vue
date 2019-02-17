@@ -30,7 +30,7 @@ export default {
     }
   },
   computed: {
-    ...mapState(['socket', 'players', 'currentUser']),
+    ...mapState(['players', 'currentUser']),
     alreadyExists() {
       return false;
       // return this.players.find(player => this.name.toLowerCase() === player.name.toLowerCase()) ? true : false;

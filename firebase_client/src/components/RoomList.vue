@@ -42,7 +42,7 @@ export default {
     };
   },
   computed: {
-    ...mapState(['socket', 'rooms']),
+    ...mapState(['rooms']),
   },
   watch: {},
   methods: {

@@ -47,7 +47,7 @@ export default {
     };
   },
   computed: {
-    ...mapState(['socket', 'currentRoom']),
+    ...mapState(['currentRoom']),
   },
   watch: {},
   methods: {

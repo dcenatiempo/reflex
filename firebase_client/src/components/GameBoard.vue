@@ -5,20 +5,26 @@
 </template>
 
 <script>
-// @ is an alias to /src
-// import NewPlayerInpu from '@/components/HelloWorld.vue'
-// import { mapState, mapGetters, mapMutations, mapActions } from 'vuex';
+import { mapState, mapGetters } from 'vuex';
+import SocketMixin from '@/mixins/SocketMixin.js';
+
 export default {
   name: 'game-board',
+  mixins: [SocketMixin],
   components: {},
-  props: {},
+  props: {
+  },
   data() {
     return {};
   },
-  computed: {},
+  computed: {
+    ...mapState(['currentRoom', 'currentUser']),
+    ...mapGetters(['roomPlayers']),
+  },
   watch: {},
   methods: {},
-  mounted() {},
+  mounted() {
+  },
 }
 </script>
 

@@ -22,7 +22,7 @@ import ChatWidget from '@/components/ChatWidget';
 import GameBoard from '@/components/GameBoard';
 
 export default {
-  name: 'home',
+  name: 'room',
   components: {
     PlayerList,
     ChatWidget,
@@ -34,7 +34,7 @@ export default {
     }
   },
   computed: {
-    ...mapState(['socket', 'players', 'currentUser', 'currentRoom']),
+    ...mapState(['players', 'currentUser', 'currentRoom']),
     ...mapGetters(['roomPlayers', 'roomChat']),
   },
   methods: {

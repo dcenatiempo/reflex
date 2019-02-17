@@ -1,5 +1,5 @@
 const db = require('../db').get();
-const ObjectID = require('mongodb').ObjectID;
+// const ObjectID = require('mongodb').ObjectID;
 const { emit } = require('./events');
 
 let io;
@@ -11,7 +11,8 @@ const register = function (ioServer) {
 const connection = function(socket) {
     socket.playerId = socket.handshake.query.playerId;
     socket.currentRoom = socket.handshake.query.currentRoom;
-    socket.playerId = 'null' == socket.playerId ? null : ObjectID(socket.playerId);
+    console.log(socket.playerId)
+    socket.playerId = 'null' == socket.playerId ? null : socket.playerId;
     socket.currentRoom = 'null' == socket.currentRoom ? null : socket.currentRoom;
 
     if (socket.playerId) {
@@ -76,7 +77,7 @@ const newPlayer = function(socket, name) {
 const deletePlayer = function(socket, playerId) {
     
     // remove player from players collection
-    db.players.deleteOne({_id: ObjectID(playerId)}, (err, res) => {
+    db.players.deleteOne({_id: playerId}, (err, res) => {
         if(err) console.log(err);
 
         socket.playerId = null;
