@@ -9,17 +9,22 @@
 </template>
 
 <script>
-import { mapState, mapMutations, mapActions } from 'vuex';
+import { mapState, mapGetters, mapMutations, mapActions } from 'vuex';
 
 export default {
   name: 'app',
+  data() {
+    return {
+    }
+  },
   computed: {
-    ...mapState(['socket', 'playerId', 'currentRoom']),
+    ...mapState(['currentRoom']),
+    ...mapGetters(['currentUser']),
     path() {
-      let playerId = this.playerId;
+      let currentUser = this.currentUser;
       let room = this.currentRoom;
 
-      if (!playerId)
+      if (!currentUser)
         return '/';
 
       if (!room)
@@ -29,41 +34,25 @@ export default {
     }
   },
   methods: {
-      ...mapMutations(['authenticatePlayer', 'updatePlayerList']),
-      ...mapActions(['deletePlayer', 'addPlayer', 'leaveRoom']),
+      ...mapMutations(['setCurrentUser', 'updatePlayerList']),
+      ...mapActions(['signOut', 'addPlayer', 'leaveRoom']),
   },
   mounted() {
     let vm = this;
-    this.socket.open();
+    
+    this.$router.push(this.path);
 
-    this.socket.on('disconnect', (reason) => {
-      console.log(reason);
-      if (reason === 'io server disconnect') {
-        // the disconnection was initiated by the server, you need to reconnect manually
-        vm.socket.connect();
-      }
-      // else the socket will automatically try to reconnect
+    this.$fb.auth.onAuthStateChanged( (user) => {
+      vm.setCurrentUser(user);
     });
 
-    this.socket.on('reconnect_attempt', () => {
-      vm.socket.io.opts.query = {
-        playerId: window.sessionStorage.getItem('playerId'),
-        currentRoom: window.sessionStorage.getItem('currentRoom')
-      }
-    });
-
-    this.socket.on('delete-player', () => {
-      vm.deletePlayer();
-      vm.d
-    });
-
-    this.socket.on('players-update', (playerList) => {
-      vm.updatePlayerList(playerList);
-    });
-
-    this.socket.on('add-player', (id) => {
-      if (!id) return;
-      vm.addPlayer(id);
+    this.$fb.players//.where("state", "==", "CA")
+    .onSnapshot(function(collection) {
+      let players = [];
+      collection.forEach(doc => {
+        players.push(doc.data())
+      });
+      vm.updatePlayerList(players);
     });
   },
   watch: {
@@ -76,7 +65,7 @@ export default {
         return
       } 
       if ('home' === to.name) {
-        // this.deletePlayer();
+        // this.signOut();
       }
       
     }

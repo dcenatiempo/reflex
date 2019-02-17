@@ -7,7 +7,7 @@
         v-on:keyup.enter="handleInput" />
     <button
         class="btn"
-        :disabled="disabled"
+        :disabled="isDisabled"
         @click="handleInput">
       {{buttonText}}
     </button>
@@ -31,6 +31,10 @@ export default {
     maxLength: {
       type: Number,
       default: 255,
+    },
+    disabled: {
+      type: Boolean,
+      default: false
     }
   },
   data() {
@@ -39,8 +43,8 @@ export default {
     };
   },
   computed: {
-    disabled() {
-      if (this.input.length <= 0) return true;
+    isDisabled() {
+      if (this.input.length <= 0 || this.disabled) return true;
       return false;
     },
   },

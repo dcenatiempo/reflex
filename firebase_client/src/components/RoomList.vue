@@ -6,9 +6,9 @@
       <span class="count">Players</span>
     </li>
     <scrollable-ul :watch-data="rooms" :max-height="400">
-      <li v-for="room in rooms" :key="room">
+      <li v-for="room in rooms" :key="room.name">
         <span class="name">{{room.name}}</span>
-        <span class="count">{{room.playerCount}}/{{MAX_PLAYERS}}</span>
+        <span class="count">{{room.players.length}}/{{MAX_PLAYERS}}</span>
         <button class="btn" @click="joinRoom(room.name)" :disabled="room.playerCount >= MAX_PLAYERS">Join Room</button>
       </li>
     </scrollable-ul>
@@ -17,7 +17,8 @@
       @input="handleInput"
       placeholder="Enter room name..."
       :buttonText="buttonText"
-      :max-length="24"/>
+      :max-length="24"
+      :disabled="disabled"/>
   </div>
 </template>
 
@@ -37,6 +38,7 @@ export default {
     return {
       buttonText: 'Create Room',
       MAX_PLAYERS: 8,
+      disabled: false,
     };
   },
   computed: {
@@ -54,6 +56,7 @@ export default {
       this.joinRoom(room);
     },
     handleInput(newRoom) {
+      this.disabled = newRoom.toLowerCase() === 'arena';
       this.buttonText = this.roomExistsAlready(newRoom, this.rooms) ? 'Join Room' : 'Create Room';
     },
   },

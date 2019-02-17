@@ -7,10 +7,10 @@
       <span class="time">Alive since</span>
     </li>
     <scrollable-ul :watch-data="players" :max-height="100">
-      <li v-for="player in players" :key="player._id" :class="{ me: playerId === player._id }">
+      <li v-for="player in players" :key="player.id" :class="{ me: playerId === player.id }">
         <span class="name" :title="player.name">{{player.name}}</span>
         <span class="record">{{playerRecord(player)}}</span>
-        <span class="time">{{$moment(player.createdAt).fromNow()}}</span>
+        <span class="time">{{$moment(player.createdAt.seconds*1000).fromNow()}}</span>
       </li>
     </scrollable-ul>
   </div>

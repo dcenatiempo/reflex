@@ -117,8 +117,8 @@ const sendRoomChat = function(socket, message) {
     const payload = {
         message: message.substring(0,255),
         playerId: socket.playerId
-    }
-
+    };
+    console.log(payload)
     io.to(socket.currentRoom).emit(emit.UPDATE_ROOM_CHAT, payload);
 }
 

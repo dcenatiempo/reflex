@@ -6,12 +6,12 @@
     </header>
     <player-list
       :players="players"
-      :playerId="playerId" />
+      :playerId="currentUser ? currentUser.id : null" />
     <room-list />
     <chat-widget
       :messages="arenaChat"
-      :playerId="playerId"
-      mode="arena"/>
+      :playerId="currentUser.id"
+      mode="Arena"/>
   </div>
 </template>
 
@@ -24,7 +24,7 @@ import RoomList from '@/components/RoomList';
 import ChatWidget from '@/components/ChatWidget';
 
 export default {
-  name: 'home',
+  name: 'arena',
   components: {
     PlayerList,
     RoomList,
@@ -36,30 +36,38 @@ export default {
     }
   },
   computed: {
-    ...mapState(['socket', 'players', 'playerId', 'currentRoom']),
+    ...mapState(['players', 'currentUser', 'currentRoom', 'players']),
     ...mapGetters(['arenaChat']),
   },
   methods: {
-    ...mapMutations(['updateRoomList', 'addArenaChat']),
-    ...mapActions(['deletePlayer']),
+    ...mapMutations(['updateRoomList', 'setArenaChat']),
+    ...mapActions(['signOut']),
     leaveArena() {
-      this.deletePlayer(this.playerId);
+      this.signOut();
     }
   },
   mounted() {
-    if (!this.playerId)
+    let vm = this;
+
+    if (!this.currentUser)
       this.$router.replace({ path: '/' });
     if (this.currentRoom)
       this.$router.replace({ path: `/arena/${this.currentRoom}`});
     
-    this.socket.emit('request-rooms');
+    // this.socket.emit('request-rooms');
 
-    this.socket.on('rooms-update', (roomList) => {
-      this.updateRoomList(roomList);
+    this.$fb.rooms//.where("state", "==", "CA")
+    .onSnapshot( collection => {
+      let rooms = [];
+      collection.forEach(doc => {
+        rooms.push(doc.data())
+      });
+      vm.updateRoomList(rooms);
     });
 
-    this.socket.on('update-arena-chat', message => {
-      this.addArenaChat(message);
+    this.$fb.chat.doc('arenaChat')
+    .onSnapshot( doc => {
+      vm.setArenaChat(doc.data().chat);
     });
   
   },

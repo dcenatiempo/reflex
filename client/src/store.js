@@ -60,6 +60,8 @@ export default new Vuex.Store({
     // Chat
     addArenaChat: (state, message) => state.arenaChat = state.arenaChat.concat(message),
     addRoomChat: (state, message) => state.roomChat = state.roomChat.concat(message),
+    clearRoomChat: (state) => state.roomChat = [],
+    clearArenaChat: (state) => state.arenaChat = [],
   },
   actions: {
     // Players
@@ -69,6 +71,8 @@ export default new Vuex.Store({
     },
     deletePlayer: (context, id) => {
       context.commit('authenticatePlayer', null);
+      context.commit('clearRoomChat');
+      context.commit('clearArenaChat');
       window.sessionStorage.removeItem('playerId');
       window.sessionStorage.removeItem('currentRoom');
       context.state.socket.emit('delete-player', id);
@@ -82,7 +86,8 @@ export default new Vuex.Store({
     },
     leaveRoom: (context, room) => {
       context.commit('setRoom', null);
-      context.commit('updateRoomPlayers', [])
+      context.commit('updateRoomPlayers', []);
+      context.commit('clearRoomChat');
       window.sessionStorage.removeItem('currentRoom');
       context.state.socket.emit('leave-room', room);
     },

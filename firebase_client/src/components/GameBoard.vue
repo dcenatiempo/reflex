@@ -1,14 +1,15 @@
 <template>
-  <div id="template">
+  <div id="game-board" class="widget">
+    <h2>Game Board</h2>
   </div>
 </template>
 
 <script>
 // @ is an alias to /src
 // import NewPlayerInpu from '@/components/HelloWorld.vue'
-import { mapState, mapGetters, mapMutations, mapActions } from 'vuex';
+// import { mapState, mapGetters, mapMutations, mapActions } from 'vuex';
 export default {
-  name: 'Template',
+  name: 'game-board',
   components: {},
   props: {},
   data() {
@@ -22,5 +23,8 @@ export default {
 </script>
 
 <style lang="scss">
+#game-board {
+  grid-area: game-board;
+}
 
 </style>

@@ -7,11 +7,11 @@
     <game-board />
     <player-list
       :players="roomPlayers"
-      :playerId="playerId"/>
+      :playerId="currentUser.id"/>
     <chat-widget
       :messages="roomChat"
-      :playerId="playerId"
-      mode="room"/>
+      :playerId="currentUser.id"
+      mode="Room"/>
   </div>
 </template>
 
@@ -34,25 +34,34 @@ export default {
     }
   },
   computed: {
-    ...mapState(['socket', 'players', 'playerId', 'currentRoom']),
+    ...mapState(['socket', 'players', 'currentUser', 'currentRoom']),
     ...mapGetters(['roomPlayers', 'roomChat']),
   },
   methods: {
-    ...mapMutations(['updateRoomList', 'addRoomChat', 'updateRoomPlayers']),
+    ...mapMutations(['updateRoomList', 'setRoomChat', 'updateRoomPlayers']),
     ...mapActions(['leaveRoom']),
   },
   mounted() {
     let vm = this;
-    if (!this.playerId)
+    if (!this.currentUser)
       this.$router.replace({ path: '/' });
     if (!this.currentRoom)
       this.$router.replace({ path: '/arena' });
-    this.socket.on('update-room-chat', message => {
-      vm.addRoomChat(message);
+
+    this.$fb.rooms//.where("state", "==", "CA")
+    .onSnapshot(function(collection) {
+      let rooms = [];
+      collection.forEach(doc => {
+        rooms.push(doc.data())
+      });
+      vm.updateRoomList(rooms);
     });
-    this.socket.on('room-players-update', players => {
-      vm.updateRoomPlayers(players);
-    })
+
+    this.$fb.chat.doc(`${this.currentRoom}Chat`)
+    .onSnapshot( doc => {
+      if (doc.exists)
+        vm.setRoomChat(doc.data().chat);
+    });
   
   },
   watch: {},

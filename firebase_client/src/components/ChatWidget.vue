@@ -37,7 +37,7 @@ export default {
     },
     mode: {
       type: String,
-      default: 'arena', // 'room'
+      default: 'Arena', // 'Room'
     },
   },
   data() {
@@ -51,9 +51,9 @@ export default {
   },
   watch: {},
   methods: {
-    ...mapActions(['sendMessage']),
+    ...mapActions(['sendArenaMessage', 'sendRoomMessage']),
     handleSubmit(input) {
-      this.sendMessage({ mode: this.mode, message: input });
+        this[`send${this.mode}Message`]( input );
     }
   },
   mounted() {},
