@@ -11,7 +11,7 @@
     <chat-widget
       :messages="arenaChat"
       :playerId="currentUser.id"
-      mode="Arena"/>
+      mode="arena"/>
   </div>
 </template>
 

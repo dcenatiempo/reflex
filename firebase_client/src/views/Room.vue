@@ -11,7 +11,7 @@
     <chat-widget
       :messages="roomChat"
       :playerId="currentUser.id"
-      mode="Room"/>
+      mode="room"/>
   </div>
 </template>
 

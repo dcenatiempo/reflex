@@ -154,54 +154,38 @@ export default new Vuex.Store({
       }
     },
 
-    // Chat
-    sendArenaMessage: ({ state }, message) => {
-      let newChat = state.arenaChat.concat({
-        message,
-        playerId: state.currentUser.id,
-        timestamp: new Date(),
-      });
-      if (newChat.length === 1) {
-        state.fb.chat.doc('arenaChat').set({
-          chat: newChat
-        }).then( () => {
-          
-        }).catch( e => {
-          console.log(e);
+    sendMessage: ({ state }, { room, message }) => {
+      // grab reference to chat document
+      let docRef = state.fb.chat.doc(`${room}Chat`);
+
+      // start transaction
+      state.fb.db.runTransaction( transaction => {
+
+        // get the doc
+        return transaction.get(docRef).then( doc => {
+          let newMessage = {
+            message,
+            playerId: state.currentUser.id,
+            timestamp: new Date(),
+          };
+
+          // if it doesn't exist, create it
+          if (!doc.exists) {
+            transaction.set(docRef, { chat: [newMessage] });
+            return [newMessage];
+          }
+
+          // otherwise push this message to the end of chat, and slice off first message if its too big
+          let updatedChat = doc.data().chat.concat(newMessage);
+          updatedChat = updatedChat.length <= 10 ? updatedChat : updatedChat.slice(1); 
+          transaction.update(docRef, { chat: updatedChat });
+          return [updatedChat]
         });
-      }
-      if (newChat.length > 10) newChat.shift();
-      state.fb.chat.doc('arenaChat').update({
-        chat: newChat
-      }).then( () => {
-        
-      }).catch( e => {
-        console.log(e);
+      // }).then( currentChat => {
+          // console.log("After Transaction, the currentChat is: ", currentChat);
+      }).catch( err => {
+          console.error(err);
       });
     },
-    sendRoomMessage: ({ state }, message) => {
-      let newChat = state.roomChat.concat({
-        message,
-        playerId: state.currentUser.id,
-        timestamp: new Date(),
-      });
-      if (newChat.length === 1) {
-        state.fb.chat.doc(`${state.currentRoom}Chat`).set({
-          chat: newChat
-        }).then( () => {
-          
-        }).catch( e => {
-          console.log(e);
-        });
-      }
-      if (newChat.length > 10) newChat.shift();
-      state.fb.chat.doc(`${state.currentRoom}Chat`).update({
-        chat: newChat
-      }).then( () => {
-        
-      }).catch( e => {
-        console.log(e);
-      });
-    }
   }
-})
+});
