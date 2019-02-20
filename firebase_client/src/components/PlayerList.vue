@@ -10,7 +10,7 @@
       <li v-for="player in players" :key="player.id" :class="{ me: playerId === player.id }">
         <span class="name" :title="player.name">{{player.name}}</span>
         <span class="record">{{playerRecord(player)}}</span>
-        <span class="time">{{$moment(player.createdAt.seconds*1000).fromNow()}}</span>
+        <span class="time">{{$moment(player.createdAt._seconds*1000).fromNow()}}</span>
       </li>
     </scrollable-ul>
   </div>

@@ -10,16 +10,18 @@
 
 <script>
 import { mapState, mapGetters, mapMutations, mapActions } from 'vuex';
+import SocketMixin from './mixins/SocketMixin';
 
 export default {
   name: 'app',
+  mixins: [SocketMixin],
   data() {
     return {
     }
   },
   computed: {
     ...mapState(['currentRoom']),
-    ...mapGetters(['currentUser']),
+    ...mapGetters(['socket', 'currentUser']),
     path() {
       let currentUser = this.currentUser;
       let room = this.currentRoom;
@@ -40,18 +42,16 @@ export default {
   mounted() {
     let vm = this;
     
+    // Routing
     this.$router.push(this.path);
 
+    // Authentication
     this.$fb.auth.onAuthStateChanged( (user) => {
       vm.setCurrentUser(user);
     });
 
-    this.$fb.players//.where("state", "==", "CA")
-    .onSnapshot(function(collection) {
-      let players = [];
-      collection.forEach(doc => {
-        players.push(doc.data())
-      });
+    // Listen for Player List Updates
+    this.socket.on('update-player-list', players => {
       vm.updatePlayerList(players);
     });
   },
@@ -67,9 +67,7 @@ export default {
       if ('home' === to.name) {
         // this.signOut();
       }
-      
-    }
-
+    },
   },
 }
 </script>

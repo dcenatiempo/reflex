@@ -33,7 +33,7 @@ export default new Vuex.Store({
     roomChat: [],
 
     // current "logged in" player information
-    playerId: playerId,
+    currentUser: null,
     // keys: 'arrows',
     currentRoom: currentRoom,
   },

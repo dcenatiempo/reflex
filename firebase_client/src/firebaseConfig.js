@@ -17,18 +17,15 @@ firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION);
 // firebase utils
 const db = firebase.firestore();
 const auth = firebase.auth();
-const currentUser = auth.currentUser;
 
 // firebase collections
 const players = db.collection('players');
 const rooms = db.collection('rooms');
 const chat = db.collection('chat');
 
-
 export default {
     db,
     auth,
-    currentUser,
     players,
     rooms,
     chat,

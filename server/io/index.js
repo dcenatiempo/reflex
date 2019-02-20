@@ -10,19 +10,16 @@ io.on('connection', function (socket) {
   
   socket.conn.on(on.HEARTBEAT, () => { events.heartbeat(socket) });
 
-  socket.on('new-player', (name) => { events.newPlayer(socket, name) });
-
   socket.on('delete-player', (playerId) => { events.deletePlayer(socket, playerId)});
 
   socket.on('enter-room', (room) => { events.enterRoom(socket, room) });
-
+  socket.on('request-room-chat', (room) => { events.requestRoomChat(socket, room) });
   socket.on('leave-room', (room) => { events.leaveRoom(socket, room) });
 
+  socket.on('enter-arena', () => { events.enterArena(socket) });
   socket.on('request-rooms', () => { events.requestRooms(socket) });
-
-  socket.on('send-arena-chat', (message) => { events.sendArenaChat(socket, message) });
-
-  socket.on('send-room-chat', (message) => { events.sendRoomChat(socket, message) });
+  socket.on('request-arena-chat', () => { events.requestArenaChat(socket) });
+  socket.on('leave-arena', () => { events.leaveArena(socket) });
 
   socket.on('disconnect', (reason) => { events.disconnect(socket, reason) });
 });

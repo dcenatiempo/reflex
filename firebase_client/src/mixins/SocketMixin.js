@@ -1,34 +1,36 @@
 import io from 'socket.io-client';
 
-import { mapState } from 'vuex';
+import { mapMutations, mapGetters } from 'vuex';
 
 export default {
   data() {
     return {
-      socket: null
     };
   },
   computed: {
-    ...mapState(['fb'])
+    ...mapGetters(['fb', 'currentUser', 'currentRoom']),
   },
-  methods: {},
+  methods: {
+    ...mapMutations(['setSocket']),
+  },
   created() {
-    debugger
     let vm = this;
 
+    let playerId = this.fb.auth.currentUser ? this.fb.auth.currentUser.uid : null;
     let socketConfig = {
       path: '/socket',
       query: {
-        playerId: this.fb.auth.currentUser.uid,
-        currentRoom: window.sessionStorage.getItem('currentRoom'),
+        playerId: playerId,
+        currentRoom: this.currentRoom,
       },
       autoConnect: false
     }
-    this.socket = io('http://localhost:8080', socketConfig);
+    let socket = io('http://localhost:8080', socketConfig);
+    this.setSocket(socket);
 
-    this.socket.open();
+    socket.open();
 
-    this.socket.on('disconnect', (reason) => {
+    socket.on('disconnect', (reason) => {
       console.log(reason);
       if (reason === 'io server disconnect') {
         // the disconnection was initiated by the server, you need to reconnect manually
@@ -37,10 +39,10 @@ export default {
       // else the socket will automatically try to reconnect
     });
 
-    this.socket.on('reconnect_attempt', () => {
+    socket.on('reconnect_attempt', () => {
       vm.socket.io.opts.query = {
-        playerId: this.fb.auth.currentUser.uid,
-        currentRoom: window.sessionStorage.getItem('currentRoom')
+        playerId: vm.currentUser.id,
+        currentRoom: vm.currentRoom,
       }
     });
   },

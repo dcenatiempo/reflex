@@ -30,10 +30,9 @@ export default {
     }
   },
   computed: {
-    ...mapState(['players', 'currentUser']),
+    ...mapState(['socket', 'players', 'currentUser']),
     alreadyExists() {
-      return false;
-      // return this.players.find(player => this.name.toLowerCase() === player.name.toLowerCase()) ? true : false;
+      return this.players.find(player => this.name.toLowerCase() === player.name.toLowerCase()) ? true : false;
     }
   },
   methods: {
@@ -45,6 +44,7 @@ export default {
   mounted() {
     if (this.currentUser)
       this.$router.replace({ path: '/arena' });
+
   },
   watch: {},
 }

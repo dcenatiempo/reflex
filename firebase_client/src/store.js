@@ -6,23 +6,26 @@ Vue.use(Vuex);
 
 export default new Vuex.Store({
   state: {
+    // services
     fb,
+    socket: null,
+    // user data
+    currentUser: null,
+    currentRoom: window.sessionStorage.getItem('currentRoom'),
+    // Arena/Room data
     rooms: [],
     players: [],
     arenaChat: [],
     roomChat: [],
-    currentUser: null,
-    // keys: 'arrows',
-    currentRoom: window.sessionStorage.getItem('currentRoom'),
   },
   getters: {
-    currentUser: (state) => state.currentUser = state.currentUser === null ? null : {
+    socket: (state) => state.socket,
+    fb: (state) => state.fb,
+    currentUser: (state) => state.currentUser === null ? null : {
       name: state.currentUser.displayName,
       id: state.currentUser.uid
     },
-    // playerInfo: (state) => state.players.find(player => state.playerId === player.id),
     roomPlayers: (state) => {
-      debugger
       let room = state.rooms.find(room => state.currentRoom === room.name);
       let playerArray = room ? room.players : [];
       return state.players.filter(player => playerArray.includes(player.id));
@@ -39,15 +42,22 @@ export default new Vuex.Store({
     }),
   },
   mutations: {
-    // Players
+    setSocket: (state, socket) => state.socket = socket,
+    // user data
     setCurrentUser: (state, user) => state.currentUser = user,
+    clearCurrentUser: (state) => state.currentUser = null,
+    setCurrentRoom: (state, room) => {
+      state.currentRoom = room;
+      window.sessionStorage.setItem('currentRoom', room);
+    },
+    clearCurrentRoom: (state) => {
+      state.currentRoom = null;
+      window.sessionStorage.removeItem('currentRoom');
+    },
+
+    // Arena/Room data
     updatePlayerList: (state, players) => state.players = players,
-
-    // Rooms
     updateRoomList: (state, rooms) => state.rooms = rooms,
-    setRoom: (state, room) => state.currentRoom = room,
-
-    // Chat
     setArenaChat: (state, chat) => state.arenaChat = chat,
     setRoomChat: (state, chat) => state.roomChat = chat,
     clearRoomChat: (state) => state.roomChat = [],
@@ -55,81 +65,137 @@ export default new Vuex.Store({
   },
   actions: {
     // Players
-    signIn: ({ commit, state }, name) => {
-      state.fb.auth.signInAnonymously()
-        .then( () => { 
-          return state.fb.auth.currentUser.updateProfile({ displayName: name });
+    signIn: ({ commit, getters }, name) => {
+      // firebase sign in
+      getters.fb.auth.signInAnonymously()
+        .then( () => {
+          // firebase set user name
+          return getters.fb.auth.currentUser.updateProfile({ displayName: name }); // no data returned
         }).then( () => {
-          commit('setCurrentUser', state.fb.auth.currentUser);
-          debugger
-          return state.fb.players.doc(state.fb.auth.currentUser.uid).get();
+          // set vuex currentUser
+          commit('setCurrentUser', getters.fb.auth.currentUser);
+          // get firebase player associated with user
+          return getters.fb.players.doc(getters.fb.auth.currentUser.uid).get();
         }).then( doc => {
-          debugger
           if (doc.exists) {
-              let player = {
-                name,
-                updatedAt: new Date(),
-              };
-              return state.fb.players.doc(state.fb.auth.currentUser.uid).update(player);
+            console.log('player already exists. Updating...')
+            // if player exist, update it
+            let player = {
+              name,
+              updatedAt: new Date(),
+              socketId: getters.socket.id,
+            };
+            return getters.fb.players.doc(getters.fb.auth.currentUser.uid).update(player);
           } else {
-              let newPlayer = {
-                name,
-                wins: 0,
-                gamesPlayed: 0,
-                updatedAt: new Date(),
-                createdAt: new Date(),
-                id: state.fb.auth.currentUser.uid,
-              };
-              return state.fb.players.doc(state.fb.auth.currentUser.uid).set(newPlayer)
+            // if player does not exist, create it
+            let newPlayer = {
+              name,
+              wins: 0,
+              gamesPlayed: 0,
+              updatedAt: new Date(),
+              createdAt: new Date(),
+              id: getters.fb.auth.currentUser.uid,
+              socketId: getters.socket.id,
+            };
+            return getters.fb.players.doc(getters.fb.auth.currentUser.uid).set(newPlayer)
           }
-      }).catch( error => {
-        
-        console.log(error);
+      }).then( () => {
+        //
+      }).catch( e => {
+        console.log(e);
       });
     },
     signOut: ({ state, commit }) => {
+      // remove player from firebase
       state.fb.players.doc(state.currentUser.id).delete()
       .then( () => {
+        // firebase user signout
         return state.fb.auth.signOut()
       }).then( () => {
         console.log('Signed Out');
-        commit('setCurrentUser', null);
+        // clear out vuex
+        commit('clearCurrentUser');
+        commit('clearCurrentRoom')
         commit('clearRoomChat');
         commit('clearArenaChat');
-        window.sessionStorage.removeItem('currentRoom');
       }).catch( error => {
-        
         console.error('Sign Out Error', error);
       });
     },
 
     // Rooms
-    joinRoom: ({ state, commit }, roomName) => {
-      commit('setRoom', roomName);
-      window.sessionStorage.setItem('currentRoom', roomName);
-      let room = state.rooms.find(room => roomName === room.name);
-      if (!room) {
-        state.fb.rooms.doc(roomName).set({
-          name: roomName,
-          players: [state.currentUser.id],
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        }).catch( e => {
-          console.log(e);
+    joinRoom: ({ getters, commit }, roomName) => {
+      // firebase transaction      
+      let docRef = getters.fb.rooms.doc(roomName);
+      getters.fb.db.runTransaction( transaction => {
+
+        // get the room
+        return transaction.get(docRef).then( doc => {
+          
+          // if room doesn't exist, create it
+          if (!doc.exists) {
+            let newRoom = {
+              name: roomName,
+              players: [getters.currentUser.id],
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            };
+            transaction.set(docRef, newRoom);
+            return
+          }
+
+          // otherwise add player to room
+          let update = {
+            updatedAt: new Date(),
+            players: doc.data().players.concat([getters.currentUser.id])
+          }
+          transaction.update(docRef, update);
         });
-      } else {
-        state.fb.rooms.doc(roomName).update({
-          players: room.players.concat(state.currentUser.id),
-          updatedAt: new Date(),
-        }).catch( e => {
-          console.log(e);
-        });
-      }
+      }).then( () => {
+        commit('setCurrentRoom', roomName);
+      }).catch( e => {
+          console.error(e);
+      });
     },
-    leaveRoom: ({ commit, state }, roomName) => {
-      commit('setRoom', null);
-      commit('clearRoomChat');
-      window.sessionStorage.removeItem('currentRoom');
+    leaveRoom: ({ commit, state, getters }, roomName) => {
+      // firebase transaction
+      let docRef = getters.fb.rooms.doc(roomName);
+      getters.fb.db.runTransaction( transaction => {
+
+        // get the room
+        return transaction.get(docRef).then( doc => {
+          
+          // if room doesn't exist, return
+          if (!doc.exists) return;
+          debugger
+          // if player is not in room return
+          const newPlayers = doc.data().players.filter(playerId => playerId !== getters.currentUser.id);
+          if (newPlayers.length === doc.data().players.length)
+            return;
+          
+          // if room is empty, delete it
+          if (newPlayers.length === 0) {
+            transaction.delete(docRef);
+            return;
+          }
+
+          // otherwise remove player from room
+          const update = {
+            updatedAt: new Date(),
+            players: newPlayers
+          }
+          transaction.update(docRef, update);
+        });
+      }).then( () => {
+        commit('clearCurrentRoom');
+        commit('clearRoomChat');
+      }).catch( e => {
+          console.error(e);
+      });
+
+      // clear vuex
+      
+
       let room = state.rooms.find(room => roomName === room.name);
       if (room) {
         let newPlayers = room.players.filter(player => player !== state.currentUser.id)
@@ -154,35 +220,32 @@ export default new Vuex.Store({
       }
     },
 
-    sendMessage: ({ state }, { room, message }) => {
-      // grab reference to chat document
-      let docRef = state.fb.chat.doc(`${room}Chat`);
+    // Chat
+    sendMessage: ({ state, getters }, { room, message }) => {
+      // firebase transactions
+      getters.fb.db.runTransaction( transaction => {
+        let docRef = state.fb.chat.doc(`${room}Chat`);
 
-      // start transaction
-      state.fb.db.runTransaction( transaction => {
-
-        // get the doc
+        // get the specific chat thread
         return transaction.get(docRef).then( doc => {
           let newMessage = {
             message,
-            playerId: state.currentUser.id,
+            playerId: getters.currentUser.id,
             timestamp: new Date(),
           };
 
-          // if it doesn't exist, create it
+          // if chat doesn't exist, create it
           if (!doc.exists) {
-            transaction.set(docRef, { chat: [newMessage] });
-            return [newMessage];
+            transaction.set(docRef, { room, chat: [newMessage] });
+            return;
           }
 
-          // otherwise push this message to the end of chat, and slice off first message if its too big
+          // otherwise push this message to the end of chat,
           let updatedChat = doc.data().chat.concat(newMessage);
+          // if the thread is too big, truncate it
           updatedChat = updatedChat.length <= 10 ? updatedChat : updatedChat.slice(1); 
           transaction.update(docRef, { chat: updatedChat });
-          return [updatedChat]
         });
-      // }).then( currentChat => {
-          // console.log("After Transaction, the currentChat is: ", currentChat);
       }).catch( err => {
           console.error(err);
       });

@@ -36,8 +36,8 @@ export default {
     }
   },
   computed: {
-    ...mapState(['players', 'currentUser', 'currentRoom', 'players']),
-    ...mapGetters(['arenaChat']),
+    ...mapState(['socket', 'players', 'currentRoom', 'players']),
+    ...mapGetters(['arenaChat', 'currentUser']),
   },
   methods: {
     ...mapMutations(['updateRoomList', 'setArenaChat']),
@@ -54,20 +54,16 @@ export default {
     if (this.currentRoom)
       this.$router.replace({ path: `/arena/${this.currentRoom}`});
     
-    // this.socket.emit('request-rooms');
+    // request initial population of data
+    this.socket.emit('request-rooms');
+    this.socket.emit('request-arena-chat');
 
-    this.$fb.rooms//.where("state", "==", "CA")
-    .onSnapshot( collection => {
-      let rooms = [];
-      collection.forEach(doc => {
-        rooms.push(doc.data())
-      });
+    // listen for data updates
+    this.socket.on('update-room-list', rooms => {
       vm.updateRoomList(rooms);
     });
-
-    this.$fb.chat.doc('arenaChat')
-    .onSnapshot( doc => {
-      vm.setArenaChat(doc.data().chat);
+    this.socket.on('update-arena-chat', chat => {
+      vm.setArenaChat(chat);
     });
   
   },
