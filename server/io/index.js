@@ -21,6 +21,8 @@ io.on('connection', function (socket) {
   socket.on('request-arena-chat', () => { events.requestArenaChat(socket) });
   socket.on('leave-arena', () => { events.leaveArena(socket) });
 
+  socket.on('request-move', (data) => { events.requestMove(socket, data) });
+
   socket.on('disconnect', (reason) => { events.disconnect(socket, reason) });
 });
 

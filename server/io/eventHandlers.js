@@ -2,6 +2,7 @@
 // const ObjectID = require('mongodb').ObjectID;
 const { emit } = require('./events');
 const fb = require('../firebase');
+const reflex = require('../reflex');
 
 let io;
 
@@ -107,6 +108,18 @@ const requestRoomChat = function(socket, room) {
     
 }
 
+const requestMove = function(socket, data) {
+    let rooms = Object.keys(socket.rooms).filter(room => room !== socket.id);
+    let room = rooms.length > 0 ? rooms[0] : null;
+    if (!room) {
+        console.log('error: trying to move, but not in a game room!');
+        return;
+    }
+    console.log(data, room, socket.playerId);
+    // reflex[room]
+
+}
+
 const disconnect = function(socket, reason) {
     // 'client namespace disconnect'
     // ‘ping timeout'
@@ -128,6 +141,7 @@ module.exports = {
     requestRooms,
     requestArenaChat,
     requestRoomChat,
+    requestMove,
     disconnect
 };
 

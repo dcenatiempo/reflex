@@ -1,5 +1,6 @@
 const admin = require('firebase-admin');
 const { emit } = require('../io/events');
+const reflex = require('../reflex');
 
 const state = {
     db: null,
@@ -33,11 +34,26 @@ const initObservers = (io) => {
 
     roomsCollection.onSnapshot(roomsSnapshot => {
         console.count(`Received room snapshot`);
+        
+        // Handle games
+        roomsSnapshot.docChanges().forEach(change => {
+            let room = change.doc.data();
+            if (change.type === 'added')
+                reflex.createGameRoom(room.name, room.players).then( game => { 
+                    console.log('emiting: game-object to ' + room.name)
+                    io.to(room.name).emit('game-object', game)
+                });
+            if (change.type === 'modified')
+                reflex.setPlayers(room.name, room.players).then( game => io.to(room.name).emit('game-object', game));
+            if (change.type === 'removed')
+                reflex.destroyGameRoom(room.name).then( () => io.to(room.name).emit('game-object', {} ));
+        });
+
+        // emit game data to clients
         state.rooms = [];
         roomsSnapshot.forEach(doc => {
             state.rooms.push(doc.data())
         });
-        //   console.log(rooms)
         io.sockets.emit(emit.UPDATE_ROOM_LIST, state.rooms);
     }, err => {
         console.log(`Encountered error: ${err}`);

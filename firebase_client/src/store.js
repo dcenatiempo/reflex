@@ -105,12 +105,12 @@ export default new Vuex.Store({
         console.log(e);
       });
     },
-    signOut: ({ state, commit }) => {
+    signOut: ({ getters, commit }) => {
       // remove player from firebase
-      state.fb.players.doc(state.currentUser.id).delete()
+      getters.fb.players.doc(getters.currentUser.id).delete()
       .then( () => {
         // firebase user signout
-        return state.fb.auth.signOut()
+        return getters.fb.auth.signOut()
       }).then( () => {
         console.log('Signed Out');
         // clear out vuex
@@ -166,12 +166,17 @@ export default new Vuex.Store({
         return transaction.get(docRef).then( doc => {
           
           // if room doesn't exist, return
-          if (!doc.exists) return;
-          debugger
+          if (!doc.exists) {
+            transaction.delete(docRef);
+            return;
+          }
+
           // if player is not in room return
           const newPlayers = doc.data().players.filter(playerId => playerId !== getters.currentUser.id);
-          if (newPlayers.length === doc.data().players.length)
+          if (newPlayers.length === doc.data().players.length) {
+            transaction.update(docRef, {});
             return;
+          }
           
           // if room is empty, delete it
           if (newPlayers.length === 0) {
