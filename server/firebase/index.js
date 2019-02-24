@@ -40,13 +40,16 @@ const initObservers = (io) => {
             let room = change.doc.data();
             if (change.type === 'added')
                 reflex.createGameRoom(room.name, room.players).then( game => { 
-                    console.log('emiting: game-object to ' + room.name)
-                    io.to(room.name).emit('game-object', game)
+                    console.log('Added: emiting: game-object to ' + room.name);
+                    io.to(room.name).emit(emit.GAME_OBJECT, game);
                 });
             if (change.type === 'modified')
-                reflex.setPlayers(room.name, room.players).then( game => io.to(room.name).emit('game-object', game));
+                reflex.setPlayers(room.name, room.players).then( game => {
+                    console.log('Modified: emiting: game-object to ' + room.name);
+                    io.to(room.name).emit(emit.GAME_OBJECT, game);
+                });
             if (change.type === 'removed')
-                reflex.destroyGameRoom(room.name).then( () => io.to(room.name).emit('game-object', {} ));
+                reflex.destroyGameRoom(room.name).then( () => { });
         });
 
         // emit game data to clients
@@ -58,6 +61,7 @@ const initObservers = (io) => {
     }, err => {
         console.log(`Encountered error: ${err}`);
     });
+
 
     // TODO: Only return recent players?
     //       Delete old players and their Users?
@@ -71,6 +75,7 @@ const initObservers = (io) => {
     }, err => {
         console.log(`Encountered error: ${err}`);
     });
+    
 
     chatCollection.onSnapshot(chatSnapshot => {
         console.count(`Received chat snapshot`);

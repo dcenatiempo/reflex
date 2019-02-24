@@ -8,6 +8,10 @@ const createGameRoom = function(roomName, playerIds) {
   return Promise.resolve(games[roomName]);
 };
 
+const getGameRoom = function (roomName) {
+  return games[roomName];
+}
+
 const setPlayers = function(roomName, playerIds) {
   console.log('game.setPlayers()')
   games[roomName].setPlayers(playerIds);
@@ -22,6 +26,7 @@ const destroyGameRoom = function(roomName) {
 
 module.exports = {
   createGameRoom,
+  getGameRoom,
   setPlayers,
   destroyGameRoom,
 }; 

@@ -1,12 +1,15 @@
 <template>
   <div id="game-board" class="widget">
     <h2>Game Board</h2><button @click="requestMove">requestMove</button>
-    <canvas id="myCanvas" width="1200" height="600" />
+    <canvas id="myCanvas"
+      :width="game.dimensions ? game.dimensions.x : board.x"
+      :height="game.dimensions ? game.dimensions.y : board.y" />
   </div>
 </template>
 
 <script>
 import { mapState, mapGetters } from 'vuex';
+import { isEmpty } from '@/helpers';
 // import SocketMixin from '@/mixins/SocketMixin.js';
 
 export default {
@@ -20,8 +23,8 @@ export default {
       canvas: null,
       ctx: null,
       board: {
-        h: 600,
-        w: 1200,
+        y: 600,
+        x: 1200,
       },
       game: {},
       players: {}
@@ -36,40 +39,41 @@ export default {
     requestMove() {
       this.socket.emit('request-move', {foo: 'bar'});
     },
-    drawScreen() {
+    drawBoard(game) {
+      if (isEmpty(game)) return;
+      
       let vm = this;
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-      Object.keys(this.players).forEach( player => {
-        vm.drawPath(player);
-        vm.drawPlayer(player);
+      Object.keys(game.players).forEach( player => {
+        vm.drawPath(game.players[player]);
+        vm.drawPlayer(game.players[player]);
       })
     },
     drawPath(p) {
-      if (p.location.x === p.path[0,0] && p.location.y === p.path[0,1])
+      if (p.location.x === p.path[0].x && p.location.y === p.path[0].y)
         return;
       this.ctx.beginPath();
       this.ctx.strokeStyle = p.color;
       this.ctx.moveTo(p.location[0], p.location[1]);
       for (let i=p.path.length-1; i>=0; i--) {
-        if (p.path[i][0] === null) {
+        if (p.path[i] === null) {
           i--;
-          this.ctx.moveTo(p.path[i][0], p.path[i][1])
+          this.ctx.moveTo(p.path[i].x, p.path[i].y)
         }
         else {
-          this.ctx.lineTo(p.path[i][0], p.path[i][1]);
+          this.ctx.lineTo(p.path[i].x, p.path[i].y);
         }
       }
       this.ctx.stroke(); 
     },
-    drawPlayer(player) {
+    drawPlayer(p) {
       this.ctx.beginPath();
       this.ctx.strokeStyle = p.color;
       this.ctx.arc(p.location.x, p.location.y, 3, 0, 2*Math.PI); //arc(x,y,r,startangle,endangle)
       this.ctx.stroke();
     },
     frame() {
-      this.drawScreen();
+      this.drawBoard(this.game);
       if (this.game.on === true) {
         window.requestAnimationFrame(frame);
       }
@@ -84,24 +88,33 @@ export default {
       let kp = e.keyCode || e.which;
       if (kp in map)
         this.socket.emit('request-move', map[kp]);
+    },
+    handleGameObj(game) {
+      debugger
+      console.log('game object received')
+      this.game = game;
+      this.drawBoard(game);
     }
   },
   created() {
     window.addEventListener('keydown', this.requestMove);
   },
   mounted() {
+    console.log('gameroom mounted')
     let vm = this;
     this.canvas = document.getElementById("myCanvas");
     this.ctx = this.canvas.getContext("2d");
-    requestAnimationFrame(this.frame);
-    
-    this.socket.on('game-object', game => {
-      debugger
-      vm.game = game;
-    })
+
+    // Request info
+    this.socket.emit('request-game-object');
+
+    // Listeners
+    this.socket.on('game-object', this.handleGameObj);
   },
   destroyed() {
+    console.log('gameroom destroyed')
     window.removeEventListener('keydown', this.requestMove);
+    this.socket.removeListener('game-object', this.handleGameObj);
   }
 }
 </script>

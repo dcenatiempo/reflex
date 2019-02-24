@@ -109,15 +109,18 @@ const requestRoomChat = function(socket, room) {
 }
 
 const requestMove = function(socket, data) {
-    let rooms = Object.keys(socket.rooms).filter(room => room !== socket.id);
-    let room = rooms.length > 0 ? rooms[0] : null;
-    if (!room) {
-        console.log('error: trying to move, but not in a game room!');
-        return;
-    }
-    console.log(data, room, socket.playerId);
-    // reflex[room]
+    const roomName = getPlayerRoom(socket);
+    if (!roomName) return;
 
+    console.log(data, roomName, socket.playerId);
+    // reflex[room]
+}
+
+const requestGameObject = function(socket) {
+    console.log('x x x x x x x x x x x');
+    const roomName = getPlayerRoom(socket);
+    if (!roomName) return;
+    io.to(roomName).emit(emit.GAME_OBJECT, reflex.getGameRoom(roomName));
 }
 
 const disconnect = function(socket, reason) {
@@ -142,6 +145,7 @@ module.exports = {
     requestArenaChat,
     requestRoomChat,
     requestMove,
+    requestGameObject,
     disconnect
 };
 
@@ -167,4 +171,11 @@ function roomChange(socket, action, room) {
         if (err) console.log(err);
         console.log(`successfully ${action}ed room: ${room}`);
     });
+}
+
+function getPlayerRoom(socket) {
+    let rooms = Object.keys(socket.rooms).filter(room => room !== socket.id);
+    let room = rooms.length > 0 ? rooms[0] : null;
+    if (room === null) console.log('error: player not in a game room!');
+    return room;
 }

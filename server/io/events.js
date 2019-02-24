@@ -6,6 +6,7 @@ const emit = {
     UPDATE_ROOM_CHAT: 'update-room-chat',
     UPDATE_PLAYER_LIST: 'update-player-list',
     ROOM_PLAYERS_UPDATE: 'room-players-update',
+    GAME_OBJECT: 'game-object',
 }
 
 const on = {

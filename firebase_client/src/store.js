@@ -25,6 +25,7 @@ export default new Vuex.Store({
       name: state.currentUser.displayName,
       id: state.currentUser.uid
     },
+    rooms: (state) => state.rooms,
     roomPlayers: (state) => {
       let room = state.rooms.find(room => state.currentRoom === room.name);
       let playerArray = room ? room.players : [];
@@ -152,12 +153,13 @@ export default new Vuex.Store({
           transaction.update(docRef, update);
         });
       }).then( () => {
+        getters.socket.emit('enter-room', roomName);
         commit('setCurrentRoom', roomName);
       }).catch( e => {
           console.error(e);
       });
     },
-    leaveRoom: ({ commit, state, getters }, roomName) => {
+    leaveRoom: ({ commit, getters }, roomName) => {
       // firebase transaction
       let docRef = getters.fb.rooms.doc(roomName);
       getters.fb.db.runTransaction( transaction => {
@@ -198,29 +200,17 @@ export default new Vuex.Store({
           console.error(e);
       });
 
-      // clear vuex
-      
-
-      let room = state.rooms.find(room => roomName === room.name);
+      // TODO: Move this to server or inside transaction?
+      let room = getters.rooms.find(room => roomName === room.name);
       if (room) {
-        let newPlayers = room.players.filter(player => player !== state.currentUser.id)
+        let newPlayers = room.players.filter(player => player !== getters.currentUser.id)
         if (0 === newPlayers.length) {
-          state.fb.rooms.doc(roomName)
-            .delete()
-            .then( () => {
-              return state.fb.chat.doc(roomName).delete()
-            }).then( () => {
-            }).catch( e => {
+          // Delete Firebase Chat
+          getters.fb.chat.doc(`${roomName}Chat`).delete()
+            .then( () => {})
+            .catch( e => {
               console.log(e);
             });
-        } else {
-          state.fb.rooms.doc(roomName).update({
-            players: newPlayers,
-            updatedAt: new Date(),
-          }).then( () => {
-          }).catch( e => {
-            console.log(e);
-          });
         }
       }
     },

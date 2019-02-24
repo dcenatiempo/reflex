@@ -10,13 +10,17 @@ const Game = function(roomName, playerIds) {
   this.players = {};
   this.toRemovePlayers = [];
   this.toAddPlayers = [];
-  
-  playerIds.forEach(id => this.players[id] = new Player(id));
 
   this.on = false;
   // this.pause = false;
   this.speed = 1;
   // this.numDead = 0;
+  this.dimensions = {
+    x: 1200,
+    y: 600,
+  }
+
+  playerIds.forEach(id => this.players[id] = new Player(id, this.dimensions));
 
   this.setPlayers = (newPlayersIds) => {
     const currentPlayersIds = Object.keys(this.players);
@@ -26,19 +30,18 @@ const Game = function(roomName, playerIds) {
     if (true === this.on) {
       // if a game is in progress, add/remove from queues
       // these queues will be emptied between games.
-      toAdd.forEach(id => this.toAddPlayers.push(new Player(id)));
-      toRemove.forEach(id =>this.toRemovePlayers.push(new Player(id)));
+      toAdd.forEach(id => this.toAddPlayers.push(new Player(id, this.dimensios)));
+      toRemove.forEach(id =>this.toRemovePlayers.push(new Player(id, this.dimensions)));
     }
     else {
       // if a game hasn't started yet, add/remove directly
-      toAdd.forEach(id => this.players[id] = new Player(id));
+      toAdd.forEach(id => this.players[id] = new Player(id, this.dimensions));
       toRemove.forEach(id => delete this.players[id]);
     }
   };
 
   this.emptyPlayerQueues = () => {
     this.toRemovePlayers.forEach(player => delete this.players[player.id]);
-
     this.toAddPlayers.forEach(player => this.players[player.id] = player);
 
     this.toRemovePlayers = [];
