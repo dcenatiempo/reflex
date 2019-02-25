@@ -1,4 +1,4 @@
-const Game = require('./Game');
+const { Game } = require('./Game');
 
 const games = {};
 
@@ -8,8 +8,13 @@ const createGameRoom = function(roomName, playerIds) {
   return Promise.resolve(games[roomName]);
 };
 
-const getGameRoom = function (roomName) {
+const getGameRoom = function(roomName) {
   return games[roomName];
+}
+
+const startCountdown = function(roomName) {
+
+  games[roomName].doCountdown();
 }
 
 const setPlayers = function(roomName, playerIds) {
@@ -27,6 +32,7 @@ const destroyGameRoom = function(roomName) {
 module.exports = {
   createGameRoom,
   getGameRoom,
+  startCountdown,
   setPlayers,
   destroyGameRoom,
 }; 

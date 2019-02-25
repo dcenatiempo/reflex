@@ -1,20 +1,18 @@
 <template>
   <div id="game-board" class="widget">
-    <h2>Game Board</h2><button @click="requestMove">requestMove</button>
+    <h2>Game Board</h2><button @click="startGame">Start Game</button>
     <canvas id="myCanvas"
-      :width="game.dimensions ? game.dimensions.x : board.x"
-      :height="game.dimensions ? game.dimensions.y : board.y" />
+      :width="game.board ? game.board.w : board.w"
+      :height="game.board ? game.board.h : board.h" />
   </div>
 </template>
 
 <script>
 import { mapState, mapGetters } from 'vuex';
 import { isEmpty } from '@/helpers';
-// import SocketMixin from '@/mixins/SocketMixin.js';
 
 export default {
   name: 'game-board',
-  // mixins: [SocketMixin],
   components: {},
   props: {
   },
@@ -23,8 +21,8 @@ export default {
       canvas: null,
       ctx: null,
       board: {
-        y: 600,
-        x: 1200,
+        h: 600,
+        w: 1200,
       },
       game: {},
       players: {}
@@ -36,8 +34,8 @@ export default {
   },
   watch: {},
   methods: {
-    requestMove() {
-      this.socket.emit('request-move', {foo: 'bar'});
+    startGame() {
+      this.socket.emit('start-game');
     },
     drawBoard(game) {
       if (isEmpty(game)) return;
@@ -50,11 +48,12 @@ export default {
       })
     },
     drawPath(p) {
+      debugger
       if (p.location.x === p.path[0].x && p.location.y === p.path[0].y)
         return;
       this.ctx.beginPath();
       this.ctx.strokeStyle = p.color;
-      this.ctx.moveTo(p.location[0], p.location[1]);
+      this.ctx.moveTo(p.location.x, p.location.y);
       for (let i=p.path.length-1; i>=0; i--) {
         if (p.path[i] === null) {
           i--;
@@ -90,7 +89,6 @@ export default {
         this.socket.emit('request-move', map[kp]);
     },
     handleGameObj(game) {
-      debugger
       console.log('game object received')
       this.game = game;
       this.drawBoard(game);

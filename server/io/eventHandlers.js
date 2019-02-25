@@ -108,16 +108,23 @@ const requestRoomChat = function(socket, room) {
     
 }
 
+const startGame = function(socket) {
+    const roomName = getPlayerRoom(socket);
+    if (!roomName) return;
+
+    reflex.startCountdown(roomName);
+}
+
 const requestMove = function(socket, data) {
     const roomName = getPlayerRoom(socket);
     if (!roomName) return;
 
     console.log(data, roomName, socket.playerId);
     // reflex[room]
+    reflex.getGameRoom(roomName).requestPlayerMove(socket.playerId, data);
 }
 
 const requestGameObject = function(socket) {
-    console.log('x x x x x x x x x x x');
     const roomName = getPlayerRoom(socket);
     if (!roomName) return;
     io.to(roomName).emit(emit.GAME_OBJECT, reflex.getGameRoom(roomName));
@@ -144,6 +151,7 @@ module.exports = {
     requestRooms,
     requestArenaChat,
     requestRoomChat,
+    startGame,
     requestMove,
     requestGameObject,
     disconnect

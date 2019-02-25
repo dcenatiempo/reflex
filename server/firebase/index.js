@@ -39,7 +39,7 @@ const initObservers = (io) => {
         roomsSnapshot.docChanges().forEach(change => {
             let room = change.doc.data();
             if (change.type === 'added')
-                reflex.createGameRoom(room.name, room.players).then( game => { 
+                reflex.createGameRoom(room.name, room.players, io).then( game => { 
                     console.log('Added: emiting: game-object to ' + room.name);
                     io.to(room.name).emit(emit.GAME_OBJECT, game);
                 });
