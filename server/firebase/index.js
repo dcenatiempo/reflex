@@ -41,12 +41,12 @@ const initObservers = (io) => {
             if (change.type === 'added')
                 reflex.createGameRoom(room.name, room.players, io).then( game => { 
                     console.log('Added: emiting: game-object to ' + room.name);
-                    io.to(room.name).emit(emit.GAME_OBJECT, game);
+                    io.to(room.name).emit(emit.GAME_OBJECT, game.getGameObjectForClient());
                 });
             if (change.type === 'modified')
                 reflex.setPlayers(room.name, room.players).then( game => {
                     console.log('Modified: emiting: game-object to ' + room.name);
-                    io.to(room.name).emit(emit.GAME_OBJECT, game);
+                    io.to(room.name).emit(emit.GAME_OBJECT, game.getGameObjectForClient());
                 });
             if (change.type === 'removed')
                 reflex.destroyGameRoom(room.name).then( () => { });

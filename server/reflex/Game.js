@@ -27,11 +27,25 @@ const Game = function(roomName, playerIds) {
   this.speed = 1;
   // this.numDead = 0;
   this.board = {
-    w: 600,
-    h: 300,
-  }
+    w: 1200,
+    h: 600,
+    colors: {
+      red: null,
+      blue: null,
+      yellow: null,
+      orange: null,
+      green: null,
+      purple: null,
+    }
+  };
 
-  playerIds.forEach(id => this.players[id] = new Player(id, this.board));
+  // this is the object to be sent each frame. It will represent only the changes from last frame
+  this.frameChanges = {};
+
+  playerIds.forEach(id => {
+    this.players[id] = new Player(id, this.board);
+    this.board.colors[this.players[id].color] = id;
+  });
 
   this.setPlayers = (newPlayersIds) => {
     const currentPlayersIds = Object.keys(this.players);
@@ -46,8 +60,14 @@ const Game = function(roomName, playerIds) {
     }
     else {
       // if a game hasn't started yet, add/remove directly
-      toAdd.forEach(id => this.players[id] = new Player(id, this.board));
-      toRemove.forEach(id => delete this.players[id]);
+      toAdd.forEach(id => {
+        this.players[id] = new Player(id, this.board);
+        this.board.colors[this.players[id].color] = id;
+      });
+      toRemove.forEach(id => {
+        this.board.colors[this.players[id].color] = null;
+        delete this.players[id];
+      });
     }
   };
 
@@ -65,11 +85,24 @@ const Game = function(roomName, playerIds) {
     let that = this;
     setTimeout(() => {
       that.countdown--;
-
-      if (0 === that.countdown) {
+      if (Object.keys(this.players).length <= 1) {
+        console.log('not enough players')
+        that.countdown = 5;
+        io.to(roomName).emit(emit.GAME_OBJECT, { countdown: that.countdown});
+        this.emptyPlayerQueues();
+        that.doCountdown();
+        return;
+      } else if (0 === that.countdown) {
         that.start();
-      }
-      else {
+      } else if (2 === that.countdown) {
+        Object.keys(this.players).forEach(player => {
+          this.players[player].resetPaths();
+        });
+        io.to(roomName).emit(emit.GAME_OBJECT, this.getGameObjectForClient());
+        that.doCountdown();
+
+      } else {
+        io.to(roomName).emit(emit.GAME_OBJECT, { countdown: that.countdown});
         that.doCountdown();
       }
     }, 1000);
@@ -80,7 +113,7 @@ const Game = function(roomName, playerIds) {
     
     this.on = true;
     this.currentPlaying = Object.keys(this.players).length;
-
+    io.to(roomName).emit(emit.GAME_OBJECT, this.getGameObjectForClient());
     this.id = gameloop.setGameLoop(function(delta) {
         // `delta` is the delta time from the last frame
         game.updateGame(game.frame, delta);
@@ -93,7 +126,6 @@ const Game = function(roomName, playerIds) {
     gameloop.clearGameLoop(this.id);
   };
   
-
   this.resetGame = () => {
     this.stop();
     this.on = false;
@@ -101,14 +133,26 @@ const Game = function(roomName, playerIds) {
     this.currentPlaying = 0;
     this.currentDead = 0;
     this.countdown = 5;
+    io.to(roomName).emit(emit.GAME_OBJECT, this.getGameObjectForClient());
     this.doCountdown();
   };
 
   this.updateGame = (frame, delta) => {
     this.movePlayers();
-    this.checkCollisions();
+    Object.keys(this.players).forEach(pid => {
+      if (!this.players[pid].isAlive) return;
+      if (this.checkCollision(this.players, pid)) {
+        console.log('player ' + pid + ' died on frame: ' + frame)
+        this.killPlayer(pid, frame);
+      }
+    });
     this.maybeEndGame();
-    io.to(roomName).emit(emit.GAME_OBJECT, this);
+    
+    if (Object.keys(this.frameChanges).length > 0) {
+      this.frameChanges.frame = frame;
+      io.to(roomName).emit(emit.GAME_OBJECT, this.frameChanges);
+      this.frameChanges = {};
+    }
   };
 
   this.maybeEndGame = () => {
@@ -116,32 +160,98 @@ const Game = function(roomName, playerIds) {
     // Is there a winner?
     if (this.currentDead < this.currentPlaying -1)
       return; // No, keep playing... 
-
+    console.log('Game Over')
     // Yes, Game Over!
-    Object.keys(this.players).forEach(player => {
-      if (!game.players[player].isAlive) {
-        game.players[player].resetLoser();
+    Object.keys(this.players).forEach(playerId => {
+      if (!game.players[playerId].isAlive) {
+        game.players[playerId].resetLoser();
         return;
       }
-      game.players[player].resetWinner();;
+      game.players[playerId].resetWinner();
     });
     this.resetGame();
   };
 
-  this.checkCollisions = () => {
+  this.checkCollision = (players, pid) => {
+    const me = players[pid].location;
+    return Object.keys(players).some(player => {
+      return players[player].path.some((p0, i, array) => {
+        // dont check on null paths where player wrapped screen
+        if ((p0 === null) || ((i <= (array.length - 1)) && (array[i+1] === null))) return false;
+        // dont compare players current path (last item in path array && current location)
+        if (player === pid && (i === array.length-1)) return;
 
+        let p1 = {};
+        if (i === (array.length - 1)) {
+          p1.x = players[player].location.x
+          p1.y = players[player].location.y
+        } else {
+          p1.x = array[i+1].x;
+          p1.y = array[i+1].y
+        }
+
+        let a = 'y';
+        let b = 'x';
+        if (p0.x === p1.x) { // vertical
+          a = 'x';
+          b = 'y';
+        } // else horizontal
+
+        // is the point on the same axis as the path?  
+        if (me[a] == p0[a]) {
+            // is the point between the two endpoints of path?            
+            if (((p0[b] >= me[b]) || (p1[b] >= me[b])) && !((p0[b] >= me[b]) && (p1[b] >= me[b]))) { //  XOR: ( foo || bar ) && !( foo && bar )
+              return true;
+            }
+          }
+        return false;
+      });
+    });
+  };
+
+  this.addPathToFrameChanges = (pid) => {
+    this.frameChanges[`players.${pid}.path`] = this.players[pid].path;
   };
 
   this.movePlayers = () => {
     let game = this;
-    Object.keys(this.players).forEach(player => {
-      game.players[player].movePlayer(game.board, game.speed);
+    Object.keys(this.players).forEach(pid => {
+      game.players[pid].movePlayer(game.board, game.speed, game.addPathToFrameChanges);
+      this.frameChanges[`players.${pid}.location`] = this.players[pid].location;
     });
   };
 
-  this.requestPlayerMove = (playerId, direction) => {
-    this.players[playerId].requestDirectionChange(direction, this.frame);
-  }
+  this.requestPlayerMove = (pid, direction) => {
+    if (this.players[pid].requestDirectionChange(direction, this.frame)) {
+      this.frameChanges[`players.${pid}.direction`] = this.players[pid].direction;
+      this.frameChanges[`players.${pid}.path`] = this.players[pid].path;
+    }
+  };
+
+  this.killPlayer = function(pid, frame) {
+    this.players[pid].isAlive = false;
+    this.frameChanges[`players.${pid}.isAlive`] = false;
+    this.currentDead++;
+  };
+
+  this.getGameObjectForClient = () => {
+    return {
+      replace: true,
+      on: this.on,
+      frame: this.frame,
+      board: this.board,
+      countdown: this.countdown,
+      players: this.players,
+      speed: this.speed,
+      // room: this.room,
+      // toRemovePlayers = this.toRemovePlayers,
+      // toAddPlayers = this.toAddPlayers,
+      // currentPlaying: this.currentPlaying,
+      // currentDead: this.currentDead,
+      // pause: this.pause,
+      // this.numDead = 0;
+    }
+  };
 }
 
 module.exports = { Game, init };

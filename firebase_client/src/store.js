@@ -17,6 +17,7 @@ export default new Vuex.Store({
     players: [],
     arenaChat: [],
     roomChat: [],
+    colors: {},
   },
   getters: {
     socket: (state) => state.socket,
@@ -41,6 +42,22 @@ export default new Vuex.Store({
         const name = player ? player.name : 'player has left the arena...';
         return Object.assign({}, message, { name });
     }),
+    playerColors: (state) => {
+      return Object.keys(state.colors).reduce((obj, color) => {
+        if (state.colors[color] !== null) {
+          obj[state.colors[color]] = color;
+        }
+        return obj;
+      },{})
+    },
+    colorMap: () => ({
+      red: '#ff5e69',
+      blue: '#6bb5ff',
+      yellow: '#fcff6a',
+      orange: '#ffad69',
+      green: '#6bff69',
+      purple: '#d29bff',
+    }),
   },
   mutations: {
     setSocket: (state, socket) => state.socket = socket,
@@ -63,6 +80,7 @@ export default new Vuex.Store({
     setRoomChat: (state, chat) => state.roomChat = chat,
     clearRoomChat: (state) => state.roomChat = [],
     clearArenaChat: (state) => state.arenaChat = [],
+    setColors: (state, colors) => state.colors = colors,
   },
   actions: {
     // Players

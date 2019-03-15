@@ -12,7 +12,7 @@ io.on('connection', function (socket) {
   
   socket.conn.on(on.HEARTBEAT, () => { events.heartbeat(socket) });
 
-  socket.on('delete-player', (playerId) => { events.deletePlayer(socket, playerId)});
+  socket.on('delete-player', () => { events.deletePlayer(socket)});
 
   socket.on('enter-room', (room) => { events.enterRoom(socket, room) });
   socket.on('request-room-chat', (room) => { events.requestRoomChat(socket, room) });
@@ -26,6 +26,7 @@ io.on('connection', function (socket) {
   socket.on('start-game', () => { events.startGame(socket) });
   socket.on('request-game-object', () => { events.requestGameObject(socket) });
   socket.on('request-move', (data) => { events.requestMove(socket, data) });
+  socket.on('kill-player', (frame) => { events.killPlayer(socket, frame) });
 
   socket.on('disconnect', (reason) => { events.disconnect(socket, reason) });
 });

@@ -48,20 +48,20 @@ const heartbeat = function(socket) {
     });
 }
 
-const deletePlayer = function(socket, playerId) {
-    
-    // remove player from players collection
-    db.players.deleteOne({_id: playerId}, (err, res) => {
-        if(err) console.log(err);
-
+const deletePlayer = function(socket) {
+    // log player out
+    fb.get().db.collection('players').doc(socket.playerId).update({
+        updatedAt: new Date,
+        loggedIn: false
+    }).then( () => {
         socket.playerId = null;
-        console.log('player deleted');
+        if (socket.currentRoom) {
+            roomChange(socket, 'leave', socket.currentRoom);
+        }
+        notifyClientsPlayerDeleted(socket)
+    }).catch( err => {
+        console.log(err);
     });
-
-    // remove player from rooms collection
-    if (socket.currentRoom) {
-        roomChange(socket, 'leave', socket.currentRoom);
-    }
 }
 
 const enterRoom = function(socket, room) {
@@ -73,9 +73,7 @@ const leaveRoom = function(socket, room) {
 }
 
 const requestRooms = function(socket) {
-    // console.log('request rooms')
     socket.emit(emit.UPDATE_ROOM_LIST, fb.get().rooms);
-    // console.log(fb.get().rooms)
 }
 
 const requestArenaChat = function(socket) {
@@ -125,9 +123,19 @@ const requestMove = function(socket, data) {
 }
 
 const requestGameObject = function(socket) {
+    console.log('requesting game object')
     const roomName = getPlayerRoom(socket);
     if (!roomName) return;
-    io.to(roomName).emit(emit.GAME_OBJECT, reflex.getGameRoom(roomName));
+    let room = io.to(roomName);
+    if (!room) return;
+    room.emit(emit.GAME_OBJECT, reflex.getGameRoom(roomName).getGameObjectForClient());
+}
+
+const killPlayer = function(socket, frame) {
+    const roomName = getPlayerRoom(socket);
+    if (!roomName) return;
+
+    reflex.getGameRoom(roomName).killPlayer(socket.playerId, frame);
 }
 
 const disconnect = function(socket, reason) {
@@ -154,20 +162,13 @@ module.exports = {
     startGame,
     requestMove,
     requestGameObject,
+    killPlayer,
     disconnect
 };
-
-// function emitPlayersUpdate() {
-//     io.sockets.emit(emit.UPDATE_PLAYER_LIST, fb.get().players);
-// }
-
 
 function notifyClientsPlayerDeleted(socket) {
     // notify client that playerId is no longer valid
     socket.emit(emit.DELETE_PLAYER);
-            
-    // send all players the new player list
-    // emitPlayersUpdate(socket);
 }
 
 function roomChange(socket, action, room) {
@@ -178,6 +179,7 @@ function roomChange(socket, action, room) {
     socket[action](room, (err) => {
         if (err) console.log(err);
         console.log(`successfully ${action}ed room: ${room}`);
+        requestGameObject(socket);
     });
 }
 

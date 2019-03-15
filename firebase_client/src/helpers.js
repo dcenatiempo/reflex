@@ -3,9 +3,25 @@ export const capitalizeFirstLetter = (string) => {
 }
 
 export const isEmpty = (obj) => {
-    if (typeof obj !== 'object') return;
-    if (Array.isArray(obj)) {
-        return obj.length === 0;
+    // undefined
+    if (obj === undefined) return true;
+
+    // strings
+    if (typeof obj === 'string') {
+        if (obj.length === 0) return true;
+        else return false;
     }
-    return Object.keys(obj).length === 0;
+    
+    if (typeof obj === 'object') {
+        // arrays
+        if (Array.isArray(obj)) {
+            return obj.length === 0;
+        }
+        // objects
+        return Object.keys(obj).length === 0;
+    }
+    
+    // anything else
+    // TODO: handle other cases?
+    return undefined;
 }
