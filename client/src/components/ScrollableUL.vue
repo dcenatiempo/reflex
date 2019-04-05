@@ -17,7 +17,7 @@ export default {
       type: Number,
       default: 400
     },
-    watchData: Array,
+    watchData: {},
   },
   methods: {
     autoScroll() {

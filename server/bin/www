@@ -13,8 +13,6 @@ const app = require('../app');
 const debug = require('debug')('server:server');
 const server = require('http').createServer(app);
 const io = require('../io');
-const db = require('../db');
-const firebase = require('../firebase');
 
 /**
  * Get port from environment and store in Express.
@@ -24,34 +22,20 @@ var port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
 
 /**
- * Connect to DB
  * Listen on provided port, on all network interfaces.
  */
-db.connect(process.env.MONGO_URL, function(err) {
-  if (err) {
-    console.log('Unable to connect to Mongo: ', err)
-    process.exit(1)
-  } else {
-    let http = app.listen(port, function() {
-      console.log(`Listening on port ${port}...`)
-    });
+  let http = app.listen(port, function() {
+    console.log(`Listening on port ${port}...`)
+  });
 
-    server.on('error', onError);
-    server.on('listening', onListening);
+  server.on('error', onError);
+  server.on('listening', onListening);
 
-    /**
-     * initialize io on http server.
-     */
-    io.listen(http, { path: '/socket' });
+  /**
+   * initialize io on http server.
+   */
+  io.listen(http, { path: '/socket' });
 
-    /**
-     * initialize firebase.
-     * inject io
-     */
-    firebase.init(io);
-
-  }
-});
 
 /**
  * Normalize a port into a number, string, or false.

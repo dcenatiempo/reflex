@@ -10,7 +10,7 @@
           v-model="name"/>
         <span v-show="alreadyExists" class="warning">Name is already taken, choose another</span>
       </div>
-      <button class="arena-btn" :disabled="alreadyExists || name.length < 3" @click="submitPlayerName">Enter Arena</button>
+      <button class="arena-btn" :disabled="alreadyExists || name.length < 3" @click="submitPlayerName(name)">Enter Arena</button>
     </div>
   </div>
 </template>
@@ -18,7 +18,7 @@
 <script>
 // @ is an alias to /src
 // import NewPlayerInpu from '@/components/HelloWorld.vue'
-import { mapState } from 'vuex';
+import { mapState, mapActions } from 'vuex';
 
 export default {
   name: 'home',
@@ -30,19 +30,21 @@ export default {
     }
   },
   computed: {
-    ...mapState(['socket', 'players', 'playerId']),
+    ...mapState(['socket', 'players', 'currentUser']),
     alreadyExists() {
-      return this.players.find(player => this.name.toLowerCase() === player.name.toLowerCase()) ? true : false;
+      return Object.values(this.players).find(player => this.name.toLowerCase() === player.toLowerCase()) ? true : false;
     }
   },
   methods: {
-    submitPlayerName() {
-      this.socket.emit('new-player', this.name);
+    ...mapActions(['signIn']),
+    submitPlayerName(name) {
+      this.socket.emit('sign-in', name);
     },
   },
   mounted() {
-    if (this.playerId)
+    if (this.currentUser)
       this.$router.replace({ path: '/arena' });
+
   },
   watch: {},
 }

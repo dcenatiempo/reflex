@@ -1,4 +1,4 @@
-const fb = require('../firebase');
+
 const { randomInt } = require('../bin/helpers');
 
 const getRandomColor = function(colors) {
@@ -10,7 +10,7 @@ const Player = function(id, board) {
   console.log(`A player for ${id} was created`);
   let x = randomInt(10, board.w - 10);
   let y = randomInt(10, board.h - 10);
-  this.id = id; // firebase id
+  this.id = id;
   this.location = { x, y };
   this.direction = 'l'; //(l)eft, (r)ight, (u)p, (d)own
   this.path = [{ x, y }];
@@ -94,35 +94,35 @@ const Player = function(id, board) {
   };
 
   this.recordResults = function(win) {
-    let docRef = fb.get().db.collection('players').doc(this.id);
-    fb.get().db.runTransaction( transaction => {
+    // let docRef = fb.get().db.collection('players').doc(this.id);
+    // fb.get().db.runTransaction( transaction => {
 
-      // get the room
-      return transaction.get(docRef).then( doc => {
+    //   // get the room
+    //   return transaction.get(docRef).then( doc => {
         
-        // if room doesn't exist, return
-        if (!doc.exists) {
-          transaction.delete(docRef);
-          return;
-        }
+    //     // if room doesn't exist, return
+    //     if (!doc.exists) {
+    //       transaction.delete(docRef);
+    //       return;
+    //     }
 
-        let wins = doc.data().wins;
-        wins = wins + win;
-        let gamesPlayed = doc.data().gamesPlayed;
-        gamesPlayed = gamesPlayed + 1;
+    //     let wins = doc.data().wins;
+    //     wins = wins + win;
+    //     let gamesPlayed = doc.data().gamesPlayed;
+    //     gamesPlayed = gamesPlayed + 1;
 
-        const update = {
-          updatedAt: new Date,
-          wins,
-          gamesPlayed,
-        }
-        transaction.update(docRef, update);
-      });
-    }).then( () => {
+    //     const update = {
+    //       updatedAt: new Date,
+    //       wins,
+    //       gamesPlayed,
+    //     }
+    //     transaction.update(docRef, update);
+    //   });
+    // }).then( () => {
       
-    }).catch( e => {
-        console.error(e);
-    });
+    // }).catch( e => {
+    //     console.error(e);
+    // });
   }
 }
 

@@ -6,11 +6,11 @@
     </header>
     <player-list
       :players="players"
-      :playerId="playerId" />
+      :playerId="currentUser ? currentUser.id : null" />
     <room-list />
     <chat-widget
       :messages="arenaChat"
-      :playerId="playerId"
+      :playerId="currentUser.id"
       mode="arena"/>
   </div>
 </template>
@@ -24,7 +24,7 @@ import RoomList from '@/components/RoomList';
 import ChatWidget from '@/components/ChatWidget';
 
 export default {
-  name: 'home',
+  name: 'arena',
   components: {
     PlayerList,
     RoomList,
@@ -36,30 +36,34 @@ export default {
     }
   },
   computed: {
-    ...mapState(['socket', 'players', 'playerId', 'currentRoom']),
-    ...mapGetters(['arenaChat']),
+    ...mapState(['socket', 'players', 'currentRoom', 'players']),
+    ...mapGetters(['arenaChat', 'currentUser']),
   },
   methods: {
-    ...mapMutations(['updateRoomList', 'addArenaChat']),
-    ...mapActions(['deletePlayer']),
+    ...mapMutations(['setArenaChat']),
+    ...mapActions(['requestSignOut', 'confirmJoinRoom']),
     leaveArena() {
-      this.deletePlayer(this.playerId);
+      this.requestSignOut();
     }
   },
   mounted() {
-    if (!this.playerId)
+    let vm = this;
+
+    if (!this.currentUser)
       this.$router.replace({ path: '/' });
     if (this.currentRoom)
       this.$router.replace({ path: `/arena/${this.currentRoom}`});
     
+    // request initial population of data
     this.socket.emit('request-rooms');
+    this.socket.emit('request-arena-chat');
 
-    this.socket.on('rooms-update', (roomList) => {
-      this.updateRoomList(roomList);
+    // listen for data updates
+    this.socket.on('update-arena-chat', chat => {
+      vm.setArenaChat(chat);
     });
-
-    this.socket.on('update-arena-chat', message => {
-      this.addArenaChat(message);
+    this.socket.on('join-room', roomName => {
+      vm.confirmJoinRoom(roomName);
     });
   
   },

@@ -1,9 +1,9 @@
 <template>
-  <div id="chat-widget" class="widget">
+  <div id="chat-widget" class="widget" :class="colorMode">
     <h2>Chat</h2>
     <scrollable-ul :watch-data="messages" :max-height="400">
-      <li v-for="(message, index) in messages" :key="index" :class="{ me: playerId === message.playerId }">
-        <div class="chat-bubble">{{message.message}}</div>
+      <li v-for="(message, index) in messages" :key="index" :class="{ me: playerId === message.userId }">
+        <div class="chat-bubble" :style="colors ? `background-color: ${colorMap[colors[message.userId]]}` : ''">{{message.message}}</div>
         <span class="name">{{message.name}}</span>
       </li>
     </scrollable-ul>
@@ -16,7 +16,7 @@
 </template>
 
 <script>
-import { mapState, mapActions } from 'vuex';
+import { mapState, mapGetters, mapActions } from 'vuex';
 import ButtonInput from './ButtonInput';
 import ScrollableUl from './ScrollableUL';
 
@@ -39,6 +39,13 @@ export default {
       type: String,
       default: 'arena', // 'room'
     },
+    colors: {
+      type: Object,
+    },
+    colorMode: {
+      type: String,
+      default: ''
+    }
   },
   data() {
     return {
@@ -47,13 +54,15 @@ export default {
     };
   },
   computed: {
-    ...mapState(['socket', 'currentRoom']),
+    ...mapState(['currentRoom']),
+    ...mapGetters(['colorMap']),
   },
   watch: {},
   methods: {
     ...mapActions(['sendMessage']),
-    handleSubmit(input) {
-      this.sendMessage({ mode: this.mode, message: input });
+    handleSubmit(message) {
+      let room = 'arena' === this.mode ? this.mode : this.currentRoom;
+      this.sendMessage( { room, message } );
     }
   },
   mounted() {},
@@ -103,6 +112,7 @@ export default {
 
         .chat-bubble {
           background-color: rgb(238, 97, 231);
+          background-color: lightgray;
         }
         .name {
           font-weight: normal;

@@ -1,109 +1,113 @@
 // const db = require('../db').get();
 // const ObjectID = require('mongodb').ObjectID;
 const { emit } = require('./events');
-const fb = require('../firebase');
 const reflex = require('../reflex');
+const { randomStr } = require('../bin/helpers');
+
+const MS_TO_RECONNECT = 1 * 1000
 
 let io;
 
-const register = function (ioServer) {
+const registerIo = function (ioServer) {
     io = ioServer;
 }
 
 const connection = function(socket) {
-    socket.playerId = socket.handshake.query.playerId;
-    socket.currentRoom = socket.handshake.query.currentRoom;
-    socket.playerId = 'null' == socket.playerId ? null : socket.playerId;
-    socket.currentRoom = 'null' == socket.currentRoom ? null : socket.currentRoom;
-    console.log('A user connected: '+ socket.playerId + ', ' + socket.id);
+    let user = socket.handshake.query.currentUser;
+    let room = socket.handshake.query.currentRoom;
+    user = 'null' == user ? null : JSON.parse(user);
+    room = 'null' == room ? null : room;
 
-    if (socket.playerId) {
-        // update timestamp
-        fb.get().db
-            .collection('players')
-            .doc(socket.playerId)
-            .update({
-                updatedAt: new Date(),
-                socketId: socket.id
-            }).then( () => {
-                if (!socket.currentRoom) {
-                    requestRooms(socket);
-                    return;
-                }
-                roomChange(socket, 'join', socket.currentRoom);
-            }).catch( err => {
-                notifyClientsPlayerDeleted(socket);
-                console.log(err)
-            });
+    if (!user) return;
+
+    socket.playerId = user.id;
+    socket.currentRoom = room;    
+    console.log(`${user.name} connected (${user.id})`);
+
+    // maybe create user object & emit player list
+    if (reflex.users[user.id]) {
+        socket.emit(emit.UPDATE_PLAYER_LIST, reflex.users);
+    } else {
+        reflex.users[user.id] = user.name;
+        io.sockets.emit(emit.UPDATE_PLAYER_LIST, reflex.users);
+    }
+    
+    // maybe create game object & emit room list
+    if (room) {
+        enterRoom(socket, room);
+    } else {
+        requestRooms(socket); 
     }
 }
   
 const heartbeat = function(socket) {
     console.log('heartbeat: ' + socket.playerId);
-    if (!socket.playerId) return;
+    console.log(reflex.users)
+    if (!socket.playerId) return;    
+}
 
-    fb.get().db.collection('players').doc(socket.playerId).update({ updatedAt: new Date }).catch( err => {
-        notifyClientsPlayerDeleted(socket)
-        console.log(err);
-    });
+const signIn = function(socket, name) {
+    const id = randomStr(32);
+    reflex.users[id] = name;
+    socket.playerId = id;
+    socket.emit('sign-in', { name, id });
+    io.sockets.emit(emit.UPDATE_PLAYER_LIST, reflex.users);
+}
+
+const signOut = function(socket) {
+    delete reflex.users[socket.playerId];
+    socket.playerId = null;
+    socket.emit('sign-out');
+    io.sockets.emit(emit.UPDATE_PLAYER_LIST, reflex.users);
 }
 
 const deletePlayer = function(socket) {
     // log player out
-    fb.get().db.collection('players').doc(socket.playerId).update({
-        updatedAt: new Date,
-        loggedIn: false
-    }).then( () => {
-        socket.playerId = null;
-        if (socket.currentRoom) {
-            roomChange(socket, 'leave', socket.currentRoom);
-        }
-        notifyClientsPlayerDeleted(socket)
-    }).catch( err => {
+    signOut(socket);
+}
+
+const enterRoom = function(socket, room) {
+    reflex.addPlayers(room, [socket.playerId]).then(() => {
+        return roomChange(socket, 'join', room);
+    }).then(room => {
+        socket.emit(emit.JOIN_ROOM, room);
+        io.sockets.emit(emit.UPDATE_ROOM_LIST, reflex.getRoomList());
+    }).catch( (err) => {
         console.log(err);
     });
 }
 
-const enterRoom = function(socket, room) {
-    roomChange(socket, 'join', room);
-}
-
-const leaveRoom = function(socket, room) {
-    roomChange(socket, 'leave', room);
+const leaveRoom = function(socket) {
+    if (!socket.currentRoom) return;
+    let room = getPlayerRoom(socket);
+    reflex.removePlayers(room, [socket.playerId]).then( () => {
+        return roomChange(socket, 'leave', socket.currentRoom);
+    }).then(room => {
+        socket.emit(emit.LEAVE_ROOM);
+        io.sockets.emit(emit.UPDATE_ROOM_LIST, reflex.getRoomList());
+    }).catch( err => console.log(err));
 }
 
 const requestRooms = function(socket) {
-    socket.emit(emit.UPDATE_ROOM_LIST, fb.get().rooms);
+    socket.emit(emit.UPDATE_ROOM_LIST, reflex.getRoomList());
 }
 
 const requestArenaChat = function(socket) {
-    // console.log('request arena chat')
-    fb.get().db.collection('chat').doc('arenaChat').get()
-        .then(doc => {
-            if (!doc.exists) {
-                console.log('arenaChat does not exist');
-              } else {
-                socket.emit(emit.UPDATE_ARENA_CHAT, doc.data().chat);
-              }
-        }).catch( e => {
-            console.log(e);
-        });
-    
+    socket.emit(emit.UPDATE_ARENA_CHAT, reflex.getChat('arena'));
 }
 
 const requestRoomChat = function(socket, room) {
     console.log('request room chat')
-    fb.get().db.collection('chat').doc(`${room}Chat`).get()
-        .then(doc => {
-            if (!doc.exists) {
-                console.log(`${room}Chat does not exist`);
-              } else {
-                io.to(room).emit(emit.UPDATE_ROOM_CHAT, doc.data().chat);
-              }
-        }).catch( e => {
-            console.log(e);
-        });
-    
+    socket.emit(emit.UPDATE_ROOM_CHAT, reflex.getChat(room));
+}
+
+const postChat = function(socket, { room, message, userId }) {
+    reflex.postChat({ room, message, userId }).then( (chat) => {
+        if ('arena' === room)
+            io.sockets.emit(emit[`UPDATE_ARENA_CHAT`], chat);
+        else
+            io.to(room).emit(emit[`UPDATE_ROOM_CHAT`], chat); 
+    }).catch(err => console.log(err));
 }
 
 const startGame = function(socket) {
@@ -117,7 +121,6 @@ const requestMove = function(socket, data) {
     const roomName = getPlayerRoom(socket);
     if (!roomName) return;
 
-    console.log(data, roomName, socket.playerId);
     // reflex[room]
     reflex.getGameRoom(roomName).requestPlayerMove(socket.playerId, data);
 }
@@ -128,6 +131,7 @@ const requestGameObject = function(socket) {
     if (!roomName) return;
     let room = io.to(roomName);
     if (!room) return;
+    console.log(roomName)
     room.emit(emit.GAME_OBJECT, reflex.getGameRoom(roomName).getGameObjectForClient());
 }
 
@@ -144,19 +148,31 @@ const disconnect = function(socket, reason) {
     // 'transport close'
     // 'transport error'
     console.log(`${socket.playerId} disconnected because ${reason}`);
-    if ('client namespace disconnect' === reason) {
-        deletePlayer();
+    if (reason === 'client namespace disconnect') {
+        // explicit client disconnect
+        deletePlayer(socket);
+    }
+    if (reason === 'transport close') {
+        // browser closed
+        let oldPlayerId = socket.playerId;
+        setTimeout(() => {
+            if (!playerIsConnected(oldPlayerId))
+                deletePlayer(socket);
+        }, MS_TO_RECONNECT);
     }
 }
 
 module.exports = {
     connection,
-    register,
+    registerIo,
+    signIn,
+    signOut,
     heartbeat,
     deletePlayer,
     enterRoom,
     leaveRoom,
     requestRooms,
+    postChat,
     requestArenaChat,
     requestRoomChat,
     startGame,
@@ -166,21 +182,19 @@ module.exports = {
     disconnect
 };
 
-function notifyClientsPlayerDeleted(socket) {
-    // notify client that playerId is no longer valid
-    socket.emit(emit.DELETE_PLAYER);
-}
-
 function roomChange(socket, action, room) {
     console.log(`${action}ing room: ${room}`);
 
     socket.currentRoom = 'join' === action ? room : null;
 
-    socket[action](room, (err) => {
-        if (err) console.log(err);
-        console.log(`successfully ${action}ed room: ${room}`);
-        requestGameObject(socket);
-    });
+    return new Promise((resolve, reject) => {
+        socket[action](room, (err) => {
+            if (err) reject(err);
+            console.log(`successfully ${action}ed room: ${room}`);
+            requestGameObject(socket);
+            resolve(room);
+        });
+    });   
 }
 
 function getPlayerRoom(socket) {
@@ -188,4 +202,16 @@ function getPlayerRoom(socket) {
     let room = rooms.length > 0 ? rooms[0] : null;
     if (room === null) console.log('error: player not in a game room!');
     return room;
+}
+
+function playerIsConnected(playerId) {
+    let allConnectedClients = Object.keys(io.sockets.connected);
+
+    let exists = false;
+    allConnectedClients.forEach(id => {
+        if (io.sockets.connected[id].playerId === playerId) {
+            exists = true;
+        }
+    });
+    return exists;
 }

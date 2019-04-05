@@ -1,23 +1,23 @@
 <template>
-  <div id="player-list" class="widget">
+  <div id="player-list" class="widget"  :class="colorMode">
     <h2>Players</h2>
     <li class="ul-header">
       <span class="name">Name</span>
-      <span class="record">Record</span>
-      <span class="time">Alive since</span>
+      <!-- <span class="record">Record</span> -->
+      <!-- <span class="time">Alive since</span> -->
     </li>
     <scrollable-ul :watch-data="players" :max-height="100">
-      <li v-for="player in players" :key="player._id" :class="{ me: playerId === player._id }">
-        <span class="name" :title="player.name">{{player.name}}</span>
-        <span class="record">{{playerRecord(player)}}</span>
-        <span class="time">{{$moment(player.createdAt).fromNow()}}</span>
+      <li v-for="(name, id) in players" :key="id" :class="{ me: playerId === id }" :style="colors ? `color: ${colorMap[colors[id]]}` : ''">
+        <span class="name" :title="name">{{name}}</span>
+        <!-- <span class="record">{{playerRecord(player)}}</span> -->
+        <!-- <span class="time">{{$moment(player.createdAt._seconds*1000).fromNow()}}</span> -->
       </li>
     </scrollable-ul>
   </div>
 </template>
 
 <script>
-// import { mapState } from 'vuex';
+import { mapGetters } from 'vuex';
 import ScrollableUl from './ScrollableUL';
 
 export default {
@@ -30,15 +30,24 @@ export default {
   },
   props: {
     players: {
-      type: Array,
-      default: () => []
+      type: Object,
+      default: () => {}
     },
     playerId: {
       type: String,
       default: ''
     },
+    colors: {
+      type: Object,
+    },
+    colorMode: {
+      type: String,
+      default: ''
+    }
   },
-  computed: {},
+  computed: {
+    ...mapGetters(['colorMap']),
+  },
   watch: {},
   methods: {
     playerRecord(player) {

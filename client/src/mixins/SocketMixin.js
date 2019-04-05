@@ -8,19 +8,27 @@ export default {
     };
   },
   computed: {
-    ...mapGetters(['fb', 'currentUser', 'currentRoom']),
+    ...mapGetters([ 'currentUser', 'currentRoom']),
   },
   methods: {
-    ...mapMutations(['setSocket']),
+    ...mapMutations(['setSocket', 'clearCurrentUser', 'clearCurrentRoom']),
   },
   created() {
+    // prevent duplicating the session
+    if (sessionStorage.getItem('currentUser')) {
+      // 1 = page refresh
+      // 2 = duplicating tab
+      if (2 === performance.navigation.type) {
+        this.clearCurrentUser();
+        this.clearCurrentRoom();
+      }
+    }
     let vm = this;
 
-    let playerId = this.fb.auth.currentUser ? this.fb.auth.currentUser.uid : null;
     let socketConfig = {
       path: '/socket',
       query: {
-        playerId: playerId,
+        currentUser: JSON.stringify(this.currentUser),
         currentRoom: this.currentRoom,
       },
       autoConnect: false
@@ -41,8 +49,8 @@ export default {
 
     socket.on('reconnect_attempt', () => {
       vm.socket.io.opts.query = {
-        playerId: vm.currentUser.id,
-        currentRoom: vm.currentRoom,
+        currentUser: JSON.stringify(this.currentUser),
+        currentRoom: this.currentRoom,
       }
     });
   },

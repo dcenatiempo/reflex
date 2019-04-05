@@ -6,7 +6,7 @@ const { emit } = require('../io/events');
 
 let io;
 
-const init = function(ioServer) {
+const injectIo = function(ioServer) {
   io = ioServer;
 }
 
@@ -47,10 +47,20 @@ const Game = function(roomName, playerIds) {
     this.board.colors[this.players[id].color] = id;
   });
 
-  this.setPlayers = (newPlayersIds) => {
-    const currentPlayersIds = Object.keys(this.players);
-    const toAdd = arrayDif(newPlayersIds, currentPlayersIds);
-    const toRemove = arrayDif(currentPlayersIds, newPlayersIds);
+  this.setPlayers = (newPlayersIds, mode = 'set') => {
+    newPlayersIds = 'string' === typeof newPlayersIds ? [newPlayersIds] : newPlayersIds;
+    let toAdd = [];
+    let toRemove = [];
+
+    if ('set' === mode) {
+      let currentPlayersIds = Object.keys(this.players);
+      toAdd = arrayDif(newPlayersIds, currentPlayersIds);
+      toRemove = arrayDif(currentPlayersIds, newPlayersIds);
+    } else if ('add' === mode) {
+      toAdd = newPlayersIds;
+    } else if ('remove' === mode) {
+      toRemove = newPlayersIds;
+    }
 
     if (true === this.on) {
       // if a game is in progress, add/remove from queues
@@ -69,15 +79,31 @@ const Game = function(roomName, playerIds) {
         delete this.players[id];
       });
     }
+    return Promise.resolve(this.players);
+  };
+
+  this.addPlayers = (playersIds) => {
+    return this.setPlayers(playersIds, 'add');
+  };
+
+  this.removePlayers = (playersIds) => {
+    return this.setPlayers(playersIds, 'remove');
   };
 
   this.emptyPlayerQueues = () => {
+    if (!this.shouldEmptyQueue()) return;
+    console.log('emptying player queue');
     this.toRemovePlayers.forEach(player => delete this.players[player.id]);
     this.toAddPlayers.forEach(player => this.players[player.id] = player);
 
     this.toRemovePlayers = [];
     this.toAddPlayers = [];
+    io.sockets.emit(emit.UPDATE_ROOM_LIST, this.reflex.getRoomList());
   };
+
+  this.shouldEmptyQueue = () => {
+    return (this.toRemovePlayers.length > 0 || this.toAddPlayers > 0);
+  }
 
   this.doCountdown = () => {
     console.log(this.countdown)
@@ -85,11 +111,16 @@ const Game = function(roomName, playerIds) {
     let that = this;
     setTimeout(() => {
       that.countdown--;
+      this.emptyPlayerQueues();
+      if (Object.keys(this.players).length == 0) {
+        console.log('room empty')
+        this.reflex.destroyGameRoom(this.room);
+        return;
+      }
       if (Object.keys(this.players).length <= 1) {
         console.log('not enough players')
         that.countdown = 5;
         io.to(roomName).emit(emit.GAME_OBJECT, { countdown: that.countdown});
-        this.emptyPlayerQueues();
         that.doCountdown();
         return;
       } else if (0 === that.countdown) {
@@ -100,8 +131,8 @@ const Game = function(roomName, playerIds) {
         });
         io.to(roomName).emit(emit.GAME_OBJECT, this.getGameObjectForClient());
         that.doCountdown();
-
       } else {
+        console.log(io);
         io.to(roomName).emit(emit.GAME_OBJECT, { countdown: that.countdown});
         that.doCountdown();
       }
@@ -254,4 +285,4 @@ const Game = function(roomName, playerIds) {
   };
 }
 
-module.exports = { Game, init };
+module.exports = { Game, injectIo };

@@ -1,100 +1,132 @@
-import Vue from 'vue'
-import Vuex from 'vuex'
-import io from 'socket.io-client';
+import Vue from 'vue';
+import Vuex from 'vuex';
 
-Vue.use(Vuex)
-
-const playerId = window.sessionStorage.getItem('playerId');
+const currentUser = JSON.parse(window.sessionStorage.getItem('currentUser'));
 const currentRoom = window.sessionStorage.getItem('currentRoom');
-const socketConfig = {
-  path: '/socket',
-  query: {
-    playerId,
-    currentRoom,
-  },
-  autoConnect: false
-};
+
+Vue.use(Vuex);
 
 export default new Vuex.Store({
   state: {
-    // the current (and only) socket connection
-    socket: io('http://localhost:8080', socketConfig),
-
-    // list of all rooms - corespond to socket channels
+    // services
+    socket: null,
+    // user data
+    currentUser,
+    currentRoom,
+    // Arena/Room data
     rooms: [],
-
-    //list of all players connected to app
-    players: [],
-
-    roomPlayers: [],
-
+    players: {},
     arenaChat: [],
-
     roomChat: [],
-
-    // current "logged in" player information
-    currentUser: null,
-    // keys: 'arrows',
-    currentRoom: currentRoom,
+    colors: {},
   },
   getters: {
-    playerInfo: (state) => state.players.find(player => state.playerId === player._id),
-    roomPlayers: (state) => state.roomPlayers,
+    socket: (state) => state.socket,
+    currentUser: (state) => state.currentUser,
+    currentUserId: (state) => state.currentUser === null ? null : state.currentUser.id,
+    rooms: (state) => state.rooms,
+    roomPlayers: (state) => {
+      let room = state.rooms.find(room => state.currentRoom === room.name);
+      let playerArray = room ? room.players : [];
+      return playerArray.reduce((roomPlayers, id) => {
+        roomPlayers[id] = state.players[id];
+        return roomPlayers;
+      }, {});
+    },
     arenaChat: (state) => state.arenaChat.map(message => {
-        const player = state.players.find(player => player._id == message.playerId);
-        const name = player ? player.name : 'player has left the arena...';
+        const player = state.players[message.userId];
+        const name = player ? player : 'player has left the arena...';
         return Object.assign({}, message, { name });
     }),
-    roomChat: (state) => state.roomChat.map(message => Object.assign({}, message, { name: state.roomPlayers.find(player => player._id == message.playerId).name })),
+    roomChat: (state) => state.roomChat.map(message => {
+        const player = state.players[message.userId];
+        const name = player ? player : 'player has left the arena...';
+        return Object.assign({}, message, { name });
+    }),
+    playerColors: (state) => {
+      return Object.keys(state.colors).reduce((obj, color) => {
+        if (state.colors[color] !== null) {
+          obj[state.colors[color]] = color;
+        }
+        return obj;
+      },{})
+    },
+    colorMap: () => ({
+      red: '#ff5e69',
+      blue: '#6bb5ff',
+      yellow: '#fcff6a',
+      orange: '#ffad69',
+      green: '#6bff69',
+      purple: '#d29bff',
+    }),
   },
   mutations: {
-    // Players
-    authenticatePlayer: (state, id) => state.playerId = id,
+    setSocket: (state, socket) => state.socket = socket,
+    // user data
+    setCurrentUser: (state, user) => {
+      window.sessionStorage.setItem('currentUser', JSON.stringify(user));
+      state.currentUser = user;
+    },
+    clearCurrentUser: (state) => {
+      window.sessionStorage.removeItem('currentUser');
+      state.currentUser = null;
+    },
+    setCurrentRoom: (state, room) => {
+      window.sessionStorage.setItem('currentRoom', room);
+      state.currentRoom = room;
+    },
+    clearCurrentRoom: (state) => {
+      state.currentRoom = null;
+      window.sessionStorage.removeItem('currentRoom');
+    },
+
+    // Arena/Room data
     updatePlayerList: (state, players) => state.players = players,
-    updateRoomPlayers: (state, players) => state.roomPlayers = players,
-
-    // Rooms
     updateRoomList: (state, rooms) => state.rooms = rooms,
-    setRoom: (state, room) => state.currentRoom = room,
-
-    // Chat
-    addArenaChat: (state, message) => state.arenaChat = state.arenaChat.concat(message),
-    addRoomChat: (state, message) => state.roomChat = state.roomChat.concat(message),
+    setArenaChat: (state, chat) => state.arenaChat = chat,
+    setRoomChat: (state, chat) => state.roomChat = chat,
     clearRoomChat: (state) => state.roomChat = [],
     clearArenaChat: (state) => state.arenaChat = [],
+    setColors: (state, colors) => state.colors = colors,
   },
   actions: {
     // Players
-    addPlayer: (context, id) => {
-      context.commit('authenticatePlayer', (id));
-      window.sessionStorage.setItem('playerId', id);
+    requestSignIn: ({ getters }, name) => {
+      getters.socket.emit('sign-in', name);
     },
-    deletePlayer: (context, id) => {
-      context.commit('authenticatePlayer', null);
-      context.commit('clearRoomChat');
-      context.commit('clearArenaChat');
-      window.sessionStorage.removeItem('playerId');
-      window.sessionStorage.removeItem('currentRoom');
-      context.state.socket.emit('delete-player', id);
+    confirmSignIn: ({ commit }, user) => {
+      commit('setCurrentUser', user);
+    },
+    requestSignOut: ({ getters }) => {
+      getters.socket.emit('sign-out');
+    },
+    confirmSignOut: ({ commit }) => {
+      console.log('Signed Out');
+      commit('clearRoomChat');
+      commit('clearCurrentRoom');
+      commit('clearArenaChat');
+      commit('clearCurrentUser');
     },
 
     // Rooms
-    joinRoom: (context, room) => {
-      context.commit('setRoom', room);
-      window.sessionStorage.setItem('currentRoom', room);
-      context.state.socket.emit('enter-room', room);
+    requestJoinRoom: ({ getters }, roomName) => {  
+      getters.socket.emit('enter-room', roomName);
     },
-    leaveRoom: (context, room) => {
-      context.commit('setRoom', null);
-      context.commit('updateRoomPlayers', []);
-      context.commit('clearRoomChat');
-      window.sessionStorage.removeItem('currentRoom');
-      context.state.socket.emit('leave-room', room);
+    confirmJoinRoom: ({ commit }, roomName) => {
+      commit('setCurrentRoom', roomName);
+    },
+
+    requestLeaveRoom: ({ getters }) => {
+      getters.socket.emit('leave-room')
+    },
+    confirmLeaveRoom: ({ commit }) => {
+      commit('clearCurrentRoom');
+      commit('clearRoomChat');
     },
 
     // Chat
-    sendMessage: (context, { mode, message }) => {
-      context.state.socket.emit(`send-${mode}-chat`, message);
-    }
+    sendMessage: ({ getters }, { room, message }) => {
+      getters.socket.emit('post-chat', {room, message, userId: getters.currentUserId});
+    },
   }
-})
+});

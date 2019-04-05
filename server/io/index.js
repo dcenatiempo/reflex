@@ -1,18 +1,24 @@
 const io = require('socket.io')();
 const events = require('./eventHandlers');
 const { on } = require('./events');
-const { init } = require('../reflex/Game');
+const { injectIo } = require('../reflex');
 
-
-events.register(io);
-init(io);
+// inject socket.io into eventHandlers
+events.registerIo(io);
+// inject socket.io into reflex
+injectIo(io);
 
 io.on('connection', function (socket) {
   events.connection(socket);
   
   socket.conn.on(on.HEARTBEAT, () => { events.heartbeat(socket) });
 
+  socket.on('sign-in', (name) => { events.signIn(socket, name)});
+  socket.on('sign-out', () => { events.signOut(socket)});
+
   socket.on('delete-player', () => { events.deletePlayer(socket)});
+
+  socket.on('post-chat', (data) => { events.postChat(socket, data)});
 
   socket.on('enter-room', (room) => { events.enterRoom(socket, room) });
   socket.on('request-room-chat', (room) => { events.requestRoomChat(socket, room) });
