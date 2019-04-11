@@ -48,7 +48,6 @@ const postChat = function({ room, message, userId }) {
     if (!chats[room]) {
         chats[room] = new Chat.Chat(room);
     }
-    console.log(message);
     return chats[room].postChat({ message, userId }); // promise
 }
 
@@ -83,7 +82,7 @@ const removePlayers = function(roomName, playerIds) {
 const destroyGameRoom = function(roomName) {
     console.log('game.destroyGameRoom');
     delete games[roomName];
-    delete chat[roomName];
+    delete chats[roomName];
     io.sockets.emit(emit.UPDATE_ROOM_LIST, getRoomList());
     return Promise.resolve();
 }

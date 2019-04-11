@@ -1,6 +1,6 @@
 <template>
   <div id="game-board" class="relative">
-    <button @click="startGame">Start Game</button>
+    <button v-if="!startButtonClicked" class="start-game" @click="startGame">Start Game</button>
     <canvas id="myCanvas"
       :width="board.w"
       :height="board.h"
@@ -8,7 +8,7 @@
       v-hammer:swipe.right="onSwipeRight"
       v-hammer:swipe.up="onSwipeUp"
       v-hammer:swipe.down="onSwipeDown"/>
-    <div id="timer" v-show="!on">
+    <div id="timer" v-show="!on && startButtonClicked">
       <div>
       {{countdown}}
       </div>
@@ -18,7 +18,7 @@
 
 <script>
 import { mapState, mapGetters, mapMutations } from 'vuex';
-import { isEmpty } from '@/helpers';
+import { isEmpty, setVal } from '@/helpers';
 
 const colorMap = {
   red: '#ff5e69',
@@ -52,6 +52,7 @@ export default {
       players: {},
       lastOnState: false,
       speed: 1,
+      startButtonClicked: false,
     };
   },
   computed: {
@@ -65,11 +66,27 @@ export default {
       if (isEmpty(this.players)) return 0;
       return (this.board.h / 2) - this.players[this.currentUser.id].location.y;
     },
+    playerRecords() {
+      let vm = this;
+      let records = {};
+      Object.keys(this.players).forEach( id => {
+        records[id] = {
+          wins: vm.players[id].wins,
+          gamesPlayed: vm.players[id].gamesPlayed,
+        };
+      });
+      return records;
+    },
+    isPlaying() {
+      let currentPlayer = this.players[this.currentUser.id];
+      let isAlive = currentPlayer ? currentPlayer.isAlive : false;
+      return this.on && isAlive;
+    }
   },
-  watch: {},
   methods: {
     ...mapMutations(['setColors']),
     startGame() {
+      this.startButtonClicked = true;
       this.socket.emit('start-game');
     },
     getX(x) {
@@ -309,14 +326,28 @@ export default {
       }
       // if partial game, merge
       else {
-        Object.keys(gameUpdate).forEach(key => {
-          eval(`vm.${key} = gameUpdate[key]`);
-        });
+        for (let key in gameUpdate) {
+          setVal(vm, key, gameUpdate[key]);
+        }
       }
     },
   },
+  watch: {
+    isPlaying(val) {
+      this.$emit('is-playing', val);
+    },
+    playerRecords(records) {
+      this.$emit('records-updated', records);
+    }
+  },
   created() {
     window.addEventListener('keydown', this.requestMove);
+    const unwatch = this.$watch('countdown', (val) => {
+      if (val !== 5) {
+        this.startButtonClicked = true;
+        unwatch();
+      }
+    });
   },
   mounted() {
     this.canvas = document.getElementById('myCanvas');
@@ -337,8 +368,19 @@ export default {
 
 <style lang="scss">
 #game-board{
-  // grid-area: game-board;
-
+  .start-game {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: transparent;
+    border: 2px solid rgba(255, 166, 0, 0.5);
+    border-radius: 5px;
+    color: rgba(255, 166, 0, 0.5);
+    font-size: 2rem;
+    padding: 1rem;
+    z-index: 99;
+  }
   #myCanvas {
     border:2px solid #000000;
     background: black;

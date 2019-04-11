@@ -74,56 +74,17 @@ const Player = function(id, board) {
     callback(this.id)
   }
 
-  this.resetLoser = function() {
+  this.resetPlayer = function( outcome ) {
     this.isAlive = true;
+    if ('won' === outcome) this.wins++;
     this.gamesPlayed++;
     this.lastFrame = 0;
-    this.recordResults(0);
-  }
-
-  this.resetWinner = function() {
-    this.isAlive = true;
-    this.wins++;
-    this.gamesPlayed++;
-    this.lastFrame = 0;
-    this.recordResults(1);
   }
 
   this.resetPaths = function() {
     this.path = [{ x: this.location.x, y: this.location.y }];
   };
 
-  this.recordResults = function(win) {
-    // let docRef = fb.get().db.collection('players').doc(this.id);
-    // fb.get().db.runTransaction( transaction => {
-
-    //   // get the room
-    //   return transaction.get(docRef).then( doc => {
-        
-    //     // if room doesn't exist, return
-    //     if (!doc.exists) {
-    //       transaction.delete(docRef);
-    //       return;
-    //     }
-
-    //     let wins = doc.data().wins;
-    //     wins = wins + win;
-    //     let gamesPlayed = doc.data().gamesPlayed;
-    //     gamesPlayed = gamesPlayed + 1;
-
-    //     const update = {
-    //       updatedAt: new Date,
-    //       wins,
-    //       gamesPlayed,
-    //     }
-    //     transaction.update(docRef, update);
-    //   });
-    // }).then( () => {
-      
-    // }).catch( e => {
-    //     console.error(e);
-    // });
-  }
 }
 
 module.exports = Player;

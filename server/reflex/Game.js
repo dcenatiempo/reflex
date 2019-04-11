@@ -65,8 +65,20 @@ const Game = function(roomName, playerIds) {
     if (true === this.on) {
       // if a game is in progress, add/remove from queues
       // these queues will be emptied between games.
-      toAdd.forEach(id => this.toAddPlayers.push(new Player(id, this.dimensios)));
-      toRemove.forEach(id =>this.toRemovePlayers.push(new Player(id, this.board)));
+      toAdd.forEach(id => {
+        if (this.toRemovePlayers.includes(id)) {
+          this.toRemovePlayers = this.toRemovePlayers.filter(item => item != id);
+        } else {
+          this.toAddPlayers.push(id)
+        }
+      });
+      toRemove.forEach(id => {
+        if (this.toAddPlayers.includes(id)) {
+          this.toAddPlayers = this.toAddPlayers.filter(item => item != id);
+        } else {
+          this.toRemovePlayers.push(id);
+        }          
+      });
     }
     else {
       // if a game hasn't started yet, add/remove directly
@@ -93,8 +105,14 @@ const Game = function(roomName, playerIds) {
   this.emptyPlayerQueues = () => {
     if (!this.shouldEmptyQueue()) return;
     console.log('emptying player queue');
-    this.toRemovePlayers.forEach(player => delete this.players[player.id]);
-    this.toAddPlayers.forEach(player => this.players[player.id] = player);
+    this.toRemovePlayers.forEach(id => {
+      this.board.colors[this.players[id].color] = null;
+      delete this.players[id];
+    });
+    this.toAddPlayers.forEach(id => {
+      this.players[id] = new Player(id, this.board);
+      this.board.colors[this.players[id].color] = id;
+    });
 
     this.toRemovePlayers = [];
     this.toAddPlayers = [];
@@ -102,23 +120,23 @@ const Game = function(roomName, playerIds) {
   };
 
   this.shouldEmptyQueue = () => {
-    return (this.toRemovePlayers.length > 0 || this.toAddPlayers > 0);
+    return (this.toRemovePlayers.length > 0) || (this.toAddPlayers.length > 0);
   }
 
   this.doCountdown = () => {
-    console.log(this.countdown)
+    // console.log(this.countdown)
     
     let that = this;
     setTimeout(() => {
       that.countdown--;
       this.emptyPlayerQueues();
       if (Object.keys(this.players).length == 0) {
-        console.log('room empty')
+        // console.log('room empty')
         this.reflex.destroyGameRoom(this.room);
         return;
       }
       if (Object.keys(this.players).length <= 1) {
-        console.log('not enough players')
+        // console.log('not enough players')
         that.countdown = 5;
         io.to(roomName).emit(emit.GAME_OBJECT, { countdown: that.countdown});
         that.doCountdown();
@@ -132,7 +150,6 @@ const Game = function(roomName, playerIds) {
         io.to(roomName).emit(emit.GAME_OBJECT, this.getGameObjectForClient());
         that.doCountdown();
       } else {
-        console.log(io);
         io.to(roomName).emit(emit.GAME_OBJECT, { countdown: that.countdown});
         that.doCountdown();
       }
@@ -149,7 +166,7 @@ const Game = function(roomName, playerIds) {
         // `delta` is the delta time from the last frame
         game.updateGame(game.frame, delta);
         game.frame++;
-        console.log(game.frame)
+        // console.log(game.frame)
     }, 1000 / 60);
   };
 
@@ -195,10 +212,10 @@ const Game = function(roomName, playerIds) {
     // Yes, Game Over!
     Object.keys(this.players).forEach(playerId => {
       if (!game.players[playerId].isAlive) {
-        game.players[playerId].resetLoser();
+        game.players[playerId].resetPlayer('lost');
         return;
       }
-      game.players[playerId].resetWinner();
+      game.players[playerId].resetPlayer('won');
     });
     this.resetGame();
   };

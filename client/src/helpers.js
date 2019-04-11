@@ -25,3 +25,11 @@ export const isEmpty = (obj) => {
     // TODO: handle other cases?
     return undefined;
 }
+
+export const setVal = (obj, string, val) => {
+    const path = string.split(".");
+    while(path.length > 1){
+        obj = obj[path.shift()];
+     }
+     obj[path.shift()] = val;
+}

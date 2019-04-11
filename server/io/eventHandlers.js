@@ -18,7 +18,10 @@ const connection = function(socket) {
     user = 'null' == user ? null : JSON.parse(user);
     room = 'null' == room ? null : room;
 
-    if (!user) return;
+    if (!user) {
+        socket.emit(emit.UPDATE_PLAYER_LIST, reflex.users);
+        return;
+    }
 
     socket.playerId = user.id;
     socket.currentRoom = room;    
@@ -41,8 +44,7 @@ const connection = function(socket) {
 }
   
 const heartbeat = function(socket) {
-    console.log('heartbeat: ' + socket.playerId);
-    console.log(reflex.users)
+    // console.log('heartbeat: ' + socket.playerId);
     if (!socket.playerId) return;    
 }
 
@@ -131,7 +133,6 @@ const requestGameObject = function(socket) {
     if (!roomName) return;
     let room = io.to(roomName);
     if (!room) return;
-    console.log(roomName)
     room.emit(emit.GAME_OBJECT, reflex.getGameRoom(roomName).getGameObjectForClient());
 }
 

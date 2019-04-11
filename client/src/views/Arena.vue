@@ -2,16 +2,20 @@
   <div id="arena">
     <header>
       <a class="link" @click="leaveArena">&lt; Leave Arena</a>
-      <h1>This is the arena</h1>
+      <h1>Reflex Arena</h1>
     </header>
-    <player-list
-      :players="players"
-      :playerId="currentUser ? currentUser.id : null" />
-    <room-list />
-    <chat-widget
-      :messages="arenaChat"
-      :playerId="currentUser.id"
-      mode="arena"/>
+    <div class="left-side">
+      <chat-widget
+        :messages="arenaChat"
+        :playerId="currentUser.id"
+        mode="arena"/>
+    </div>
+    <div class="right-side">
+      <room-list />
+      <player-list
+        :players="players"
+        :playerId="currentUser ? currentUser.id : null" />
+    </div>
   </div>
 </template>
 
@@ -73,17 +77,34 @@ export default {
 
 <style lang="scss">
 #arena {
-  padding: 1rem;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-areas: 
-    "header header"
-    "chat-widget room-list"
-    "chat-widget player-list";
-  grid-gap: 1rem;
+  padding: .5rem;
+  display: flex;
+  flex-flow: row wrap;
 
   header {
-    grid-area: header;
+    flex-grow: 999;
+    flex-basis: 5000px;
+    margin: .5em;
+  }
+  .left-side {
+    flex-basis: 300px;
+    flex-grow: 2;
+    display: flex;
+    #chat-widget {
+      flex-grow: 1;
+      margin: .5em;
+    }
+  }
+  .right-side {
+    flex-basis: 150px;
+    flex-grow: 1;
+    #player-list {
+      margin: .5em;
+      margin-top: 1em;
+    }
+    #room-list {
+      margin: .5em;
+    }
   }
 }
 </style>

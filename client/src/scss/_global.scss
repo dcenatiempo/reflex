@@ -5,13 +5,19 @@ html, body {
     overflow-x: hidden;
   }
 body {
-position: absolute;
-overflow: hidden;
-top: 0;
-bottom: 0;
-left: 0;
-right: 0;
-margin: 0;
+    position: absolute;
+    overflow-y: scroll;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: 0;
+    background: white;
+
+    &.dark {
+        background: #24283c;
+        overflow-y: hidden;
+    }
 }
 h1, h2, h3, h4, h5 {
     margin: 0;
@@ -35,12 +41,13 @@ button.btn {
 header {
     display: flex;
     flex-flow: row wrap;
-    align-items: flex-end;
+    align-items: center;
+    padding: 0 1rem;
     h1 {
         margin: .5rem auto 1rem;
     }
     a {
-        position: absolute;
+        // position: absolute;
     }
 }
 
@@ -52,4 +59,8 @@ header {
     padding: 1rem;
     border: 1px solid lightgray;
     border-radius: 5px;
+
+    &.dark {
+        border: none;
+    }
 }

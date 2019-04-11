@@ -1,16 +1,20 @@
 <template>
   <div id="player-list" class="widget"  :class="colorMode">
-    <h2>Players</h2>
+    <h2 v-show="'' === colorMode">Players</h2>
     <li class="ul-header">
       <span class="name">Name</span>
-      <!-- <span class="record">Record</span> -->
-      <!-- <span class="time">Alive since</span> -->
+      <template v-if="Object.keys(records).length > 0">
+        <span class="record">Record</span>
+        <!-- <span class="time">Alive since</span> -->
+      </template>
     </li>
     <scrollable-ul :watch-data="players" :max-height="100">
       <li v-for="(name, id) in players" :key="id" :class="{ me: playerId === id }" :style="colors ? `color: ${colorMap[colors[id]]}` : ''">
         <span class="name" :title="name">{{name}}</span>
-        <!-- <span class="record">{{playerRecord(player)}}</span> -->
-        <!-- <span class="time">{{$moment(player.createdAt._seconds*1000).fromNow()}}</span> -->
+        <template v-if="Object.keys(records).length > 0">
+          <span class="record">{{playerRecord(records[id])}}</span>
+          <!-- <span class="time">{{$moment(player.createdAt._seconds*1000).fromNow()}}</span> -->
+        </template>
       </li>
     </scrollable-ul>
   </div>
@@ -29,20 +33,24 @@ export default {
     return {};
   },
   props: {
-    players: {
-      type: Object,
-      default: () => {}
-    },
     playerId: {
       type: String,
-      default: ''
+      default: '',
+    },
+    players: {
+      type: Object,
+      default: () => ({}),
+    },
+    records: {
+      type: Object,
+      default: () => ({}),
     },
     colors: {
       type: Object,
     },
     colorMode: {
       type: String,
-      default: ''
+      default: '',
     }
   },
   computed: {
@@ -65,7 +73,7 @@ export default {
 
   li {
     display: grid;
-    grid-template-columns: minmax(90px, 150px) 65px minmax(90px, 200px);
+    grid-template-columns: minmax(80px, 140px) 60px minmax(80px, 190px);
     grid-gap: 10px;
     align-items: start;
 
@@ -91,6 +99,10 @@ export default {
     .time {
       text-align: left;
     }
+  }
+
+  &.dark {
+    flex-basis: 140px;
   }
 }
 </style>

@@ -14,13 +14,11 @@ const Chat = function(roomName) {
   this.chat = [];
 
   this.postChat = function({ message, userId }) {
-    console.log(message)
     let newMessage = {
       message,
       userId,
       timestamp: new Date(),
     };
-    console.log(newMessage)
     let updatedChat = this.chat.concat(newMessage);
 
     // if the thread is too big, truncate it

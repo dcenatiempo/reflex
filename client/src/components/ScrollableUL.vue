@@ -2,7 +2,7 @@
   <div class="scrollable-ul">
     <ul
         ref="ul"
-        :style="`max-height: ${maxHeight}px`">
+        :style="`max-height: ${maxHeight}%`">
       <slot />
     </ul>
     <div class="gradient"></div>
@@ -42,10 +42,11 @@ export default {
 <style lang="scss">
 .scrollable-ul {
   position: relative;
-  padding: 1rem 0;
+  padding: 1rem 0 0;
   // padding-top: 1.5rem;
   flex-grow: 1;
   flex-basis: 120px;
+  overflow: hidden;
 
   ul {
     padding: 0;
@@ -61,5 +62,12 @@ export default {
       height: 2rem;
       // background: linear-gradient(to bottom, rgba(255,255,255,1) 0%,rgba(255,255,255,0) 100%); 
     }
+}
+
+.dark .scrollable-ul {
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: flex-end;
+  padding: 0;
 }
 </style>

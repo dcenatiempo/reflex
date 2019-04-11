@@ -89,4 +89,16 @@ export default {
     border-radius: 0 5px 5px 0;
   }
 }
+.dark .button-input {
+  input {
+    border-radius: 0;
+    border-bottom: 1px solid gray;
+    background: transparent;
+    color: white;
+  }
+  button {
+    background: transparent;
+    display: none;
+  }
+}
 </style>

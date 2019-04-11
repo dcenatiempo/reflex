@@ -1,9 +1,21 @@
 <template>
   <div id="chat-widget" class="widget" :class="colorMode">
-    <h2>Chat</h2>
-    <scrollable-ul :watch-data="messages" :max-height="400">
+    <h2 v-if="'' === colorMode">Chat</h2>
+    <scrollable-ul :watch-data="messages" :max-height="100">
       <li v-for="(message, index) in messages" :key="index" :class="{ me: playerId === message.userId }">
-        <div class="chat-bubble" :style="colors ? `background-color: ${colorMap[colors[message.userId]]}` : ''">{{message.message}}</div>
+        <div
+            v-if="'' === colorMode"
+            class="chat-bubble"
+            :style="colors ? `background-color: ${colorMap[colors[message.userId]]}` : ''">
+          {{message.message}}
+        </div>
+        <div
+            v-if="'dark' === colorMode"
+            class="chat-bubble"
+            :style="colors ? `color: ${colorMap[colors[message.userId]]}` : ''">
+          {{message.message}}
+        </div>
+
         <span class="name">{{message.name}}</span>
       </li>
     </scrollable-ul>
@@ -71,12 +83,11 @@ export default {
 
 <style lang="scss">
 #chat-widget {
-  grid-area: chat-widget;
   display: flex;
   flex-flow: column nowrap;
   
   .scrollable-ul {
-    padding-top: 1.5rem;
+    padding-top: 0rem;
   }
   ul {
     padding-top: 1.5rem;
@@ -127,6 +138,51 @@ export default {
           width: 100%;
           max-width: 80%;
           text-align: left;
+        }
+      }
+    }
+  }
+  &.dark {
+    flex-basis: 300px;
+    flex-grow: 3;
+    overflow: hidden;
+    flex-shrink: 1;
+
+    ul {
+
+      li {
+
+        .chat-bubble {
+          padding: 0 .5rem;
+        }
+        &.me {
+
+          .chat-bubble {
+            background-color: transparent;
+          }
+          .name {
+            display: none;
+          }
+        }
+        &:not(.me) {
+          justify-content: flex-start;
+
+          .chat-bubble {
+            background-color: transparent;
+            background-color: transparent;
+          }
+          .name {
+            color: gray;
+            top: 0;
+            left: 0.5rem;
+            transform: translateY(-100%);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+            max-width: 80%;
+            text-align: left;
+          }
         }
       }
     }

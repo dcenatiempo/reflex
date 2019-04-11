@@ -33,7 +33,8 @@ export default {
       },
       autoConnect: false
     }
-    let socket = io('http://localhost:8080', socketConfig);
+    let socket = io(window.location.origin, socketConfig);
+    // let socket = io('http://localhost:8080', socketConfig);
     this.setSocket(socket);
 
     socket.open();
