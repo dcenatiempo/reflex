@@ -4,10 +4,10 @@
     <canvas id="myCanvas"
       :width="board.w"
       :height="board.h"
-      v-hammer:swipe.left="onSwipeLeft"
-      v-hammer:swipe.right="onSwipeRight"
-      v-hammer:swipe.up="onSwipeUp"
-      v-hammer:swipe.down="onSwipeDown"/>
+      v-touch:swipe.left="onSwipeLeft"
+      v-touch:swipe.right="onSwipeRight"
+      v-touch:swipe.top="onSwipeUp"
+      v-touch:swipe.bottom="onSwipeDown"/>
     <div id="timer" v-show="!on && startButtonClicked">
       <div>
       {{countdown}}
@@ -274,15 +274,19 @@ export default {
       this.socket.emit('request-move', map[key]);
     },
     onSwipeLeft() {
+      console.log('left')
       this.socket.emit('request-move', 'l');
     },
     onSwipeRight() {
+      console.log('right')
       this.socket.emit('request-move', 'r');
     },
     onSwipeUp() {
+      console.log('up')
       this.socket.emit('request-move', 'u');
     },
     onSwipeDown() {
+      console.log('down')
       this.socket.emit('request-move', 'd');
     },
     handleGameObj(gameObj) {

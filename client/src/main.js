@@ -10,13 +10,13 @@ import App from './App.vue';
 import router from './router';
 import store from './store';
 import './registerServiceWorker';
-import { VueHammer } from 'vue2-hammer';
+import Vue2TouchEvents from 'vue2-touch-events'
 
 Vue.config.productionTip = false;
 
 Vue.use(require('vue-moment'));
 
-Vue.use(VueHammer);
+Vue.use(Vue2TouchEvents)
 
 new Vue({
   router,
