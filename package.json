@@ -8,8 +8,7 @@
     "client": "cd client; npm run serve;",
     "server": "cd server; npm start;",
     "start": "cd server && npm start;",
-    "heroku-prebuild": "cd server && npm install",
-    "heroku-postbuild": "cd client && npm install && npm run build"
+    "heroku-prebuild": "cd server && npm install"
   },
   "repository": {
     "type": "git",
