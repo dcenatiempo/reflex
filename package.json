@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "client": "cd client; npm run serve;",
     "server": "cd server; npm start;",
-    "start": "cd server; npm start;"
+    "start": "cd server && npm start;",
+    "heroku-prebuild": "cd server && npm install && cd ../client && npm install && npm run build && cd .."
   },
   "repository": {
     "type": "git",
