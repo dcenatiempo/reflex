@@ -1,10 +1,3 @@
-// if (sessionStorage.getItem('currentUser')) {
-//   if (2 === performance.navigation.type) {
-//     sessionStorage.removeItem('currentUser');
-//     sessionStorage.removeItem('currentRoom');
-//   }
-// }
-
 import Vue from 'vue';
 import App from './App.vue';
 import router from './router';
