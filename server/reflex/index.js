@@ -60,6 +60,8 @@ const postChat = function({ room, message, userId }) {
 }
 
 const startCountdown = function(roomName) {
+  // don't start two countdowns
+  if (games[roomName].countdown < 5) return;
   games[roomName].doCountdown();
 }
 

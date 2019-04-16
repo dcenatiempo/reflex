@@ -166,6 +166,9 @@ const Game = function(roomName, playerIds) {
   };
 
   this.start = () => {
+    // don't run two gameloops!
+    if (this.on) return;
+    
     const game = this;
     
     this.on = true;

@@ -345,15 +345,13 @@ export default {
         this.startButtonClicked = false;
       this.$emit('records-updated', records);
     },
+    countdown(val) {
+      if (val !== 5)
+        this.startButtonClicked = true;
+    },
   },
   created() {
     window.addEventListener('keydown', this.requestMove);
-    const unwatch = this.$watch('countdown', (val) => {
-      if (val !== 5) {
-        this.startButtonClicked = true;
-        unwatch();
-      }
-    });
   },
   mounted() {
     this.canvas = document.getElementById('myCanvas');
