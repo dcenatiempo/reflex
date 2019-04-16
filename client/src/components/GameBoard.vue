@@ -20,15 +20,6 @@
 import { mapState, mapGetters, mapMutations } from 'vuex';
 import { isEmpty, setVal } from '@/helpers';
 
-const colorMap = {
-  red: '#ff5e69',
-  blue: '#6bb5ff',
-  yellow: '#fcff6a',
-  orange: '#ffad69',
-  green: '#6bff69',
-  purple: '#d29bff',
-}
-
 export default {
   name: 'game-board',
   components: {},
@@ -57,7 +48,7 @@ export default {
   },
   computed: {
     ...mapState(['currentRoom']),
-    ...mapGetters(['socket', 'roomPlayers', 'currentUser']),
+    ...mapGetters(['socket', 'roomPlayers', 'currentUser', 'colorMap']),
     xOffset() {
       if (isEmpty(this.players)) return 0;
       return (this.board.w / 2) - this.players[this.currentUser.id].location.x;
@@ -181,7 +172,7 @@ export default {
     },
     drawPathA(p) {
       this.ctx.beginPath();
-      this.ctx.strokeStyle = colorMap[p.color];
+      this.ctx.strokeStyle = this.colorMap[p.color];
       let prevPoint = p.location;
       this.ctx.moveTo(prevPoint.x, prevPoint.y);
       for (let i=p.path.length-1; i>=0; i--) {
@@ -196,7 +187,7 @@ export default {
     },
     drawPath(p) {
       this.ctx.beginPath();
-      this.ctx.strokeStyle = colorMap[p.color];
+      this.ctx.strokeStyle = this.colorMap[p.color];
       let prevPoint = {
         x: this.getX(p.location.x),
         y: this.getY(p.location.y)
@@ -228,7 +219,7 @@ export default {
       this.ctx.beginPath();
       let point = 'a' === this.mode ? p.location : this.getPointOffset(null, p.location);
       this.ctx.arc(point.x, point.y, 3, 0, 2*Math.PI, true); //arc(x,y,r,startangle,endangle)
-      this.ctx.fillStyle = colorMap[p.color];
+      this.ctx.fillStyle = this.colorMap[p.color];
       this.ctx.closePath();
       this.ctx.fill();
     },
