@@ -2,9 +2,20 @@
 const { randomInt } = require('../bin/helpers');
 
 const getRandomColor = function(colors) {
+  console.log('- - - - - - - - - ');
+  console.log(colors);
   let availableColors = Object.keys(colors).filter(color => null === colors[color]);
-  return availableColors[randomInt(0, availableColors.length)];
+  console.log(availableColors);
+  return availableColors[randomInt(0, availableColors.length - 1)];
 };
+
+const assignPlayerColor = function(id, colors) {
+  let color = Object.keys(colors).find(key => colors[key] === id);
+  
+  color = color ? color : getRandomColor(colors);
+  console.log(`\n\n\n${color}\n\n\n`);
+  return color;
+}
 
 const Player = function(id, board) {
   console.log(`A player for ${id} was created`);
@@ -17,7 +28,7 @@ const Player = function(id, board) {
   this.isAlive = true;
   this.wins = 0;
   this.gamesPlayed = 0;
-  this.color = getRandomColor(board.colors);
+  this.color = assignPlayerColor(id, board.colors);
   this.lastFrame = 0;
 
   this.requestDirectionChange = function(direction, frame) {

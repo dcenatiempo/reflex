@@ -1,13 +1,13 @@
 <template>
   <div id="game-board" class="relative">
-    <button v-if="!startButtonClicked" class="start-game" @click="startGame">Start Game</button>
+    <button v-if="!startButtonClicked && Object.keys(players).length > 1" class="start-game" @click="startGame">Start Game</button>
     <canvas id="myCanvas"
       :width="board.w"
       :height="board.h"
-      v-hammer:swipe.left="onSwipeLeft"
-      v-hammer:swipe.right="onSwipeRight"
-      v-hammer:swipe.up="onSwipeUp"
-      v-hammer:swipe.down="onSwipeDown"/>
+      v-touch:swipe.left="onSwipeLeft"
+      v-touch:swipe.right="onSwipeRight"
+      v-touch:swipe.top="onSwipeUp"
+      v-touch:swipe.bottom="onSwipeDown"/>
     <div id="timer" v-show="!on && startButtonClicked">
       <div>
       {{countdown}}
@@ -19,15 +19,6 @@
 <script>
 import { mapState, mapGetters, mapMutations } from 'vuex';
 import { isEmpty, setVal } from '@/helpers';
-
-const colorMap = {
-  red: '#ff5e69',
-  blue: '#6bb5ff',
-  yellow: '#fcff6a',
-  orange: '#ffad69',
-  green: '#6bff69',
-  purple: '#d29bff',
-}
 
 export default {
   name: 'game-board',
@@ -57,7 +48,7 @@ export default {
   },
   computed: {
     ...mapState(['currentRoom']),
-    ...mapGetters(['socket', 'roomPlayers', 'currentUser']),
+    ...mapGetters(['socket', 'roomPlayers', 'currentUser', 'colorMap']),
     xOffset() {
       if (isEmpty(this.players)) return 0;
       return (this.board.w / 2) - this.players[this.currentUser.id].location.x;
@@ -181,7 +172,7 @@ export default {
     },
     drawPathA(p) {
       this.ctx.beginPath();
-      this.ctx.strokeStyle = colorMap[p.color];
+      this.ctx.strokeStyle = this.colorMap[p.color];
       let prevPoint = p.location;
       this.ctx.moveTo(prevPoint.x, prevPoint.y);
       for (let i=p.path.length-1; i>=0; i--) {
@@ -196,7 +187,7 @@ export default {
     },
     drawPath(p) {
       this.ctx.beginPath();
-      this.ctx.strokeStyle = colorMap[p.color];
+      this.ctx.strokeStyle = this.colorMap[p.color];
       let prevPoint = {
         x: this.getX(p.location.x),
         y: this.getY(p.location.y)
@@ -228,7 +219,7 @@ export default {
       this.ctx.beginPath();
       let point = 'a' === this.mode ? p.location : this.getPointOffset(null, p.location);
       this.ctx.arc(point.x, point.y, 3, 0, 2*Math.PI, true); //arc(x,y,r,startangle,endangle)
-      this.ctx.fillStyle = colorMap[p.color];
+      this.ctx.fillStyle = this.colorMap[p.color];
       this.ctx.closePath();
       this.ctx.fill();
     },
@@ -274,15 +265,19 @@ export default {
       this.socket.emit('request-move', map[key]);
     },
     onSwipeLeft() {
+      console.log('left')
       this.socket.emit('request-move', 'l');
     },
     onSwipeRight() {
+      console.log('right')
       this.socket.emit('request-move', 'r');
     },
     onSwipeUp() {
+      console.log('up')
       this.socket.emit('request-move', 'u');
     },
     onSwipeDown() {
+      console.log('down')
       this.socket.emit('request-move', 'd');
     },
     handleGameObj(gameObj) {
@@ -337,17 +332,17 @@ export default {
       this.$emit('is-playing', val);
     },
     playerRecords(records) {
+      if (Object.keys(records).length <= 1 && this.startButtonClicked === true)
+        this.startButtonClicked = false;
       this.$emit('records-updated', records);
-    }
+    },
+    countdown(val) {
+      if (val !== 5)
+        this.startButtonClicked = true;
+    },
   },
   created() {
     window.addEventListener('keydown', this.requestMove);
-    const unwatch = this.$watch('countdown', (val) => {
-      if (val !== 5) {
-        this.startButtonClicked = true;
-        unwatch();
-      }
-    });
   },
   mounted() {
     this.canvas = document.getElementById('myCanvas');
@@ -373,7 +368,7 @@ export default {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: transparent;
+    background: black;
     border: 2px solid rgba(255, 166, 0, 0.5);
     border-radius: 5px;
     color: rgba(255, 166, 0, 0.5);

@@ -5,7 +5,6 @@
         :style="`max-height: ${maxHeight}%`">
       <slot />
     </ul>
-    <div class="gradient"></div>
   </div>
 </template>
 
@@ -47,6 +46,8 @@ export default {
   flex-grow: 1;
   flex-basis: 120px;
   overflow: hidden;
+  display: flex;
+  flex-flow: column nowrap;
 
   ul {
     padding: 0;
@@ -55,19 +56,13 @@ export default {
     overflow-y: auto;
     scroll-behavior: smooth;
   }
-  .gradient {
-      position: absolute;
-      width: 100%;
-      top: 0;
-      height: 2rem;
-      // background: linear-gradient(to bottom, rgba(255,255,255,1) 0%,rgba(255,255,255,0) 100%); 
-    }
 }
 
 .dark .scrollable-ul {
   display: flex;
   flex-flow: column nowrap;
-  justify-content: flex-end;
   padding: 0;
+
+  
 }
 </style>

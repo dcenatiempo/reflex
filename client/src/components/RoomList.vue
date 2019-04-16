@@ -9,7 +9,7 @@
       <li v-for="room in rooms" :key="room.name">
         <span class="name">{{room.name}}</span>
         <span class="count">{{room.players.length}}/{{MAX_PLAYERS}}</span>
-        <button class="btn" @click="requestJoinRoom(room.name)" :disabled="room.playerCount >= MAX_PLAYERS">Join Room</button>
+        <button class="btn" @click="requestJoinRoom(room.name)" :disabled="room.players.length >= MAX_PLAYERS">{{room.players.length >= MAX_PLAYERS ? 'Room Full' : 'Join Room'}}</button>
       </li>
     </scrollable-ul>
     <button-input

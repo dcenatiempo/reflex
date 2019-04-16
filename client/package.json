@@ -14,7 +14,7 @@
     "vue": "^2.5.22",
     "vue-moment": "^4.0.0",
     "vue-router": "^3.0.1",
-    "vue2-hammer": "^2.1.2",
+    "vue2-touch-events": "^2.0.0",
     "vuex": "^3.0.1"
   },
   "devDependencies": {

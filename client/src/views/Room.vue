@@ -132,7 +132,7 @@ export default {
     position: fixed;
     right: 0;
     bottom: 0;
-    top: 0;
+    top: 50px;
     display: flex;
     flex-flow: column nowrap;
     // display: none;

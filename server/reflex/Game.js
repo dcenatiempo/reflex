@@ -36,6 +36,8 @@ const Game = function(roomName, playerIds) {
       orange: null,
       green: null,
       purple: null,
+      aqua: null,
+      fuchsia: null,
     }
   };
 
@@ -91,6 +93,9 @@ const Game = function(roomName, playerIds) {
         delete this.players[id];
       });
     }
+    console.log(this.board.colors);
+    io.sockets.emit(emit.UPDATE_ROOM_LIST, this.reflex.getRoomList());
+    io.to(this.room).emit(emit.GAME_OBJECT, this.getGameObjectForClient());
     return Promise.resolve(this.players);
   };
 
@@ -128,7 +133,8 @@ const Game = function(roomName, playerIds) {
     
     let that = this;
     setTimeout(() => {
-      that.countdown--;
+      if (that.countdown > 0)
+        that.countdown--;
       this.emptyPlayerQueues();
       if (Object.keys(this.players).length == 0) {
         // console.log('room empty')
@@ -136,10 +142,13 @@ const Game = function(roomName, playerIds) {
         return;
       }
       if (Object.keys(this.players).length <= 1) {
-        // console.log('not enough players')
+        console.log('not enough players')
+        Object.keys(this.players).forEach(player => {
+          this.players[player].resetPaths();
+        });
         that.countdown = 5;
-        io.to(roomName).emit(emit.GAME_OBJECT, { countdown: that.countdown});
-        that.doCountdown();
+        io.to(roomName).emit(emit.GAME_OBJECT, this.getGameObjectForClient());
+        // that.doCountdown();
         return;
       } else if (0 === that.countdown) {
         that.start();
@@ -157,6 +166,9 @@ const Game = function(roomName, playerIds) {
   };
 
   this.start = () => {
+    // don't run two gameloops!
+    if (this.on) return;
+    
     const game = this;
     
     this.on = true;

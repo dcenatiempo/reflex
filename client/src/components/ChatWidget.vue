@@ -148,6 +148,10 @@ export default {
     overflow: hidden;
     flex-shrink: 1;
 
+    .scrollable-ul {
+      justify-content: flex-end;
+    }
+
     ul {
 
       li {

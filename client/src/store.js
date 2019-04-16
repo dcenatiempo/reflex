@@ -58,6 +58,8 @@ export default new Vuex.Store({
       orange: '#ffad69',
       green: '#6bff69',
       purple: '#d29bff',
+      fuchsia: 'fuchsia',
+      aqua: 'aqua',
     }),
   },
   mutations: {
