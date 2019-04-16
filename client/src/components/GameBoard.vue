@@ -1,6 +1,6 @@
 <template>
   <div id="game-board" class="relative">
-    <button v-if="!startButtonClicked" class="start-game" @click="startGame">Start Game</button>
+    <button v-if="!startButtonClicked && Object.keys(players).length > 1" class="start-game" @click="startGame">Start Game</button>
     <canvas id="myCanvas"
       :width="board.w"
       :height="board.h"
@@ -341,8 +341,10 @@ export default {
       this.$emit('is-playing', val);
     },
     playerRecords(records) {
+      if (Object.keys(records).length <= 1 && this.startButtonClicked === true)
+        this.startButtonClicked = false;
       this.$emit('records-updated', records);
-    }
+    },
   },
   created() {
     window.addEventListener('keydown', this.requestMove);
@@ -377,7 +379,7 @@ export default {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: transparent;
+    background: black;
     border: 2px solid rgba(255, 166, 0, 0.5);
     border-radius: 5px;
     color: rgba(255, 166, 0, 0.5);

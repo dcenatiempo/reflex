@@ -2,6 +2,8 @@ const { emit } = require('../io/events');
 const Game = require('./Game');
 const Chat = require('./Chat');
 
+const MAX_PLAYERS = 8;
+
 const games = {}; // TODO change to rooms
 const chats = {
   arena: new Chat.Chat('arena'),
@@ -28,6 +30,12 @@ const roomExists = function(roomName) {
 
 const getGameRoom = function(roomName) {
   return games[roomName];
+}
+
+const roomIsFull = function(roomName) {
+  if (!roomExists(roomName)) return false;
+  return getGameRoom(roomName).length >= MAX_PLAYERS;
+
 }
 
 const getRoomList = function() {
@@ -71,8 +79,7 @@ const removePlayers = function(roomName, playerIds) {
   if (!roomExists(roomName))
     return Promise.reject()
   else
-    return games[roomName].removePlayers(playerIds)
-    .then( (players) => {
+    return games[roomName].removePlayers(playerIds).then( players => {
       if (Object.keys(players).length === 0)
         return destroyGameRoom(roomName);
       return Promise.resolve();
@@ -92,6 +99,7 @@ const reflex = {
   users,
   
   roomExists,
+  roomIsFull,
   getRoomList,
   createGameRoom,
   getGameRoom,

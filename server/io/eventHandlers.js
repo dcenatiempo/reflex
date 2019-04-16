@@ -65,10 +65,13 @@ const signOut = function(socket) {
 
 const deletePlayer = function(socket) {
     // log player out
+    console.log(socket.currentRoom, socket.playerId);
+    reflex.removePlayers(socket.currentRoom, socket.playerId);
     signOut(socket);
 }
 
 const enterRoom = function(socket, room) {
+    if (reflex.roomIsFull(room)) return;
     reflex.addPlayers(room, [socket.playerId]).then(() => {
         return roomChange(socket, 'join', room);
     }).then(room => {

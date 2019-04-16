@@ -17,7 +17,7 @@
 import { mapState, mapActions } from 'vuex';
 
 const MIN_NAME_LENGTH = 3;
-const MAX_NAME_LENGTH = 12;
+const MAX_NAME_LENGTH = 16;
 
 export default {
   name: 'EnterArena',
@@ -49,9 +49,9 @@ export default {
       if (this.name.length > MAX_NAME_LENGTH) {
         this.name = this.name.slice(0, MAX_NAME_LENGTH);
       }
-      if ('enter' != event.code) return;
+      if ('Enter' != event.code && 'NumpadEnter' != event.code) return;
       if (!this.canSubmit) return;
-      this.submitPlayerName(name);
+      this.submitPlayerName(this.name);
     }
   },
   mounted() {},

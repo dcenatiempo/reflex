@@ -73,7 +73,7 @@ export default {
 
   li {
     display: grid;
-    grid-template-columns: minmax(80px, 140px) 60px minmax(80px, 190px);
+    grid-template-columns: minmax(80px, 140px) 60px;// minmax(80px, 190px);
     grid-gap: 10px;
     align-items: start;
 
