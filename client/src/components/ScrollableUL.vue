@@ -47,6 +47,7 @@ export default {
   flex-basis: 120px;
   overflow: hidden;
   display: flex;
+  flex-flow: column nowrap;
 
   ul {
     padding: 0;
