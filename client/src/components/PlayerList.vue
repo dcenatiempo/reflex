@@ -9,10 +9,10 @@
       </template>
     </li>
     <scrollable-ul :watch-data="players" :max-height="100">
-      <li v-for="(name, id) in players" :key="id" :class="{ me: playerId === id }" :style="colors ? `color: ${colorMap[colors[id]]}` : ''">
-        <span class="name" :title="name">{{name}}</span>
+      <li v-for="player in orderedPlayers" :key="player.id" :class="{ me: playerId === player.id }" :style="colors ? `color: ${colorMap[colors[player.id]]}` : ''">
+        <span class="name" :title="player.name">{{player.name}}</span>
         <template v-if="Object.keys(records).length > 0">
-          <span class="record">{{playerRecord(records[id])}}</span>
+          <span class="record">{{playerRecord(player)}}</span>
           <!-- <span class="time">{{$moment(player.createdAt._seconds*1000).fromNow()}}</span> -->
         </template>
       </li>
@@ -22,6 +22,7 @@
 
 <script>
 import { mapGetters } from 'vuex';
+import { isEmpty } from '@/helpers';
 import ScrollableUl from './ScrollableUL';
 
 export default {
@@ -55,10 +56,24 @@ export default {
   },
   computed: {
     ...mapGetters(['colorMap']),
+    orderedPlayers() {
+      let players = Object.keys(this.players).map(id => {
+        return {
+          name: this.players[id],
+          gamesPlayed: this.records[id] && this.records[id].gamesPlayed,
+          wins: this.records[id] && this.records[id].wins,
+          id: id,
+        }
+      });
+      if (isEmpty(this.records))
+        return players;
+      return players.sort(((a,b) => b.wins - a.wins));
+    }
   },
   watch: {},
   methods: {
     playerRecord(player) {
+      if (undefined === player.wins) return '';
       return player.wins + '/' + player.gamesPlayed;
     }
   },

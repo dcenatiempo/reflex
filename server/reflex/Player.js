@@ -2,10 +2,7 @@
 const { randomInt } = require('../bin/helpers');
 
 const getRandomColor = function(colors) {
-  console.log('- - - - - - - - - ');
-  console.log(colors);
   let availableColors = Object.keys(colors).filter(color => null === colors[color]);
-  console.log(availableColors);
   return availableColors[randomInt(0, availableColors.length - 1)];
 };
 
@@ -13,7 +10,6 @@ const assignPlayerColor = function(id, colors) {
   let color = Object.keys(colors).find(key => colors[key] === id);
   
   color = color ? color : getRandomColor(colors);
-  console.log(`\n\n\n${color}\n\n\n`);
   return color;
 }
 

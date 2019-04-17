@@ -93,7 +93,6 @@ const Game = function(roomName, playerIds) {
         delete this.players[id];
       });
     }
-    console.log(this.board.colors);
     io.sockets.emit(emit.UPDATE_ROOM_LIST, this.reflex.getRoomList());
     io.to(this.room).emit(emit.GAME_OBJECT, this.getGameObjectForClient());
     return Promise.resolve(this.players);
@@ -109,7 +108,6 @@ const Game = function(roomName, playerIds) {
 
   this.emptyPlayerQueues = () => {
     if (!this.shouldEmptyQueue()) return;
-    console.log('emptying player queue');
     this.toRemovePlayers.forEach(id => {
       this.board.colors[this.players[id].color] = null;
       delete this.players[id];

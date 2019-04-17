@@ -65,7 +65,6 @@ const signOut = function(socket) {
 
 const deletePlayer = function(socket) {
     // log player out
-    console.log(socket.currentRoom, socket.playerId);
     reflex.removePlayers(socket.currentRoom, socket.playerId);
     signOut(socket);
 }
@@ -102,7 +101,6 @@ const requestArenaChat = function(socket) {
 }
 
 const requestRoomChat = function(socket, room) {
-    console.log('request room chat')
     socket.emit(emit.UPDATE_ROOM_CHAT, reflex.getChat(room));
 }
 
@@ -131,7 +129,6 @@ const requestMove = function(socket, data) {
 }
 
 const requestGameObject = function(socket) {
-    console.log('requesting game object')
     const roomName = getPlayerRoom(socket);
     if (!roomName) return;
     let room = io.to(roomName);
@@ -187,14 +184,14 @@ module.exports = {
 };
 
 function roomChange(socket, action, room) {
-    console.log(`${action}ing room: ${room}`);
+    // console.log(`${action}ing room: ${room}`);
 
     socket.currentRoom = 'join' === action ? room : null;
 
     return new Promise((resolve, reject) => {
         socket[action](room, (err) => {
             if (err) reject(err);
-            console.log(`successfully ${action}ed room: ${room}`);
+            // console.log(`successfully ${action}ed room: ${room}`);
             requestGameObject(socket);
             resolve(room);
         });

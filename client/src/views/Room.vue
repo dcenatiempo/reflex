@@ -8,7 +8,7 @@
       :mode="mode"
       @records-updated="updatePlayerRecords"
       @is-playing="updateIsPlaying"/>
-    <div v-if="!isPlaying" class="right-side">
+    <div v-show="!isPlaying" class="right-side">
       <player-list
         :players="roomPlayers"
         :playerId="currentUser.id"

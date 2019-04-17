@@ -103,7 +103,6 @@ export default new Vuex.Store({
       getters.socket.emit('sign-out');
     },
     confirmSignOut: ({ commit }) => {
-      console.log('Signed Out');
       commit('clearRoomChat');
       commit('clearCurrentRoom');
       commit('clearArenaChat');

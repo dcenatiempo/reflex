@@ -67,7 +67,6 @@ const startCountdown = function(roomName) {
 
 const addPlayers = function(roomName, playerIds) {
   playerIds = 'string' === typeof playerIds ? [playerIds] : playerIds;
-  console.log('game.setPlayers()')
   if (!roomExists(roomName))
     createGameRoom(roomName, playerIds);
   else
@@ -77,7 +76,6 @@ const addPlayers = function(roomName, playerIds) {
 
 const removePlayers = function(roomName, playerIds) {
   playerIds = 'string' === typeof playerIds ? [playerIds] : playerIds;
-  console.log('game.removePlayers()')
   if (!roomExists(roomName))
     return Promise.reject()
   else

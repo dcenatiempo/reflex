@@ -1,6 +1,7 @@
 <template>
   <div id="game-board" class="relative">
     <button v-if="!startButtonClicked && Object.keys(players).length > 1" class="start-game" @click="startGame">Start Game</button>
+    <button v-if="1 === Object.keys(players).length" class="start-game" @click="recruitPlayers">Need More Players</button>
     <canvas id="myCanvas"
       :width="board.w"
       :height="board.h"
@@ -17,7 +18,7 @@
 </template>
 
 <script>
-import { mapState, mapGetters, mapMutations } from 'vuex';
+import { mapState, mapGetters, mapMutations, mapActions } from 'vuex';
 import { isEmpty, setVal } from '@/helpers';
 
 export default {
@@ -76,9 +77,15 @@ export default {
   },
   methods: {
     ...mapMutations(['setColors']),
+    ...mapActions(['sendMessage']),
     startGame() {
       this.startButtonClicked = true;
       this.socket.emit('start-game');
+    },
+    recruitPlayers() {
+      let message = `Please join me in the "${this.currentRoom}" room`;
+      let room = 'arena';
+      this.sendMessage( { room, message } );
     },
     getX(x) {
       return x + this.xOffset;
@@ -224,10 +231,10 @@ export default {
       this.ctx.fill();
     },
     drawBoard() {
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       if (isEmpty(this.players)) return;
       let vm = this;
       this.ctx.lineWidth = 2;
-      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       let players = Object.keys(this.players);
       
       if ('a' === this.mode) {
